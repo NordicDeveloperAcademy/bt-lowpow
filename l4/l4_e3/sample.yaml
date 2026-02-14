@@ -1,0 +1,21 @@
+sample:
+  description: Designing Low Power Bluetooth LE devices Lesson 4 Exercise 3 - Memory Retention
+  name: Low Power Bluetooth LE devices - Lesson 4 Exercise 3 
+
+
+common: 
+    sysbuild: true
+    build_only: true
+    skip: true
+    sysbuild: true
+
+    integration_platforms:
+      - nrf54l15dk/nrf54l15/cpuapp
+      - nrf54lm20dk/nrf54lm20a/cpuapp
+    platform_allow:
+      - nrf54l15dk/nrf54l15/cpuapp
+      - nrf54lm20dk/nrf54lm20a/cpuapp
+
+tests:
+  l4_e3: {}
+

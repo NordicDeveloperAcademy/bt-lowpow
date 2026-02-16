@@ -26,6 +26,11 @@
 
 #include <dk_buttons_and_leds.h>
 
+#include <hal/nrf_memconf.h>
+#include <ram_pwrdn.h>
+
+#define RAM_96KB_DIS_SECTION_BITMASK (0x000000F8)
+
 #define DEVICE_NAME             CONFIG_BT_DEVICE_NAME
 #define DEVICE_NAME_LEN         (sizeof(DEVICE_NAME) - 1)
 
@@ -38,8 +43,8 @@
 
 #define USER_BUTTON             DK_BTN1_MSK
 
-#define BT_LE_ADV_CONN_100                                                                      \
-    BT_LE_ADV_PARAM(BT_LE_ADV_OPT_CONN, BT_GAP_ADV_FAST_INT_MIN_2, BT_GAP_ADV_FAST_INT_MIN_2,  \
+#define BT_LE_ADV_CONN_1000                                                                      \
+    BT_LE_ADV_PARAM(BT_LE_ADV_OPT_CONN, BT_GAP_ADV_SLOW_INT_MIN, BT_GAP_ADV_SLOW_INT_MIN,  \
             NULL)
 
 static bool app_button_state;
@@ -56,7 +61,7 @@ static const struct bt_data sd[] = {
 
 static void adv_work_handler(struct k_work *work)
 {
-    int err = bt_le_adv_start(BT_LE_ADV_CONN_100, ad, ARRAY_SIZE(ad), sd, ARRAY_SIZE(sd));
+    int err = bt_le_adv_start(BT_LE_ADV_CONN_1000, ad, ARRAY_SIZE(ad), sd, ARRAY_SIZE(sd));
 
     if (err) {
         printk("Advertising failed to start (err %d)\n", err);
@@ -190,6 +195,9 @@ static struct bt_lbs_cb lbs_callbacs = {
 int main(void)
 {
     int err;
+
+    nrf_memconf_ramblock_control_mask_enable_set(NRF_MEMCONF, 0, RAM_96KB_DIS_SECTION_BITMASK, false);
+    power_down_unused_ram();
 
     printk("Starting Bluetooth Peripheral LBS sample\n");
 

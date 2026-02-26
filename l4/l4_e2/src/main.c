@@ -227,6 +227,9 @@ int main(void)
 
     k_work_init(&adv_work, adv_work_handler);
     advertising_start();
-
-    return 0;
+    
+    while (1) 
+    {
+        k_sleep(K_MSEC(1000));
+    }
 }

@@ -7,8 +7,29 @@
 source "Kconfig.zephyr"
 
 menu "Lesson 4 Exercise 2 config"
+
+config PWM_DUTY_CYCLE
+	depends on  PWM || NRFX_PWM_GRTC
+	int "PWM duty cycle in %"
+	default 25
+
 config NRFX_PWM_GRTC
 	bool "Use GRTC for PWM"
 	default n
+
+config NRFX_TIMER00_1MHz
+	bool "Use TIMER00 at 1MHz"
+	default n
+	select NRFX_TIMER
+
+config NRFX_TIMER00_128MHz
+	bool "Use TIMER00 at 128MHz"
+	default n
+	select NRFX_TIMER
+
+config NRFX_TIMER20_1MHz
+	bool "Use TIMER20 at 1MHz"
+	default n
+	select NRFX_TIMER
 
 endmenu

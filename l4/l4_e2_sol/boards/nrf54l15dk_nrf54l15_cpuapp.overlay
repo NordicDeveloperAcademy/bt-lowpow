@@ -7,26 +7,17 @@
 };
 };
 
-// &wdt31 {
-// 	status = "okay";
-// };
+&wdt31 {
+	status = "okay";
+};
 
-//  &timer00 {
-//     status = "okay";
-// };
+ &timer00 {
+    status = "okay";
+};
 
  &timer20 {
     status = "okay";
 };
-
-&uart20 {
-	status="disabled";
-};
-
-&uart30 {
-	status="disabled";
-};
-
 
 
 &pwm21 {

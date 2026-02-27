@@ -23,33 +23,9 @@
 #include <zephyr/bluetooth/gatt.h>
 
 #include <bluetooth/services/lbs.h>
-
 #include <zephyr/settings/settings.h>
+#include <helpers.h>
 
-#if CONFIG_WATCHDOG
-    #include <zephyr/drivers/watchdog.h>
-#endif
-
-#if CONFIG_NRFX_TIMER
-    #include <nrfx_timer.h>
-    #define TIMER_INST_IDX 20
-    static nrfx_timer_t timer_inst = NRFX_TIMER_INSTANCE(NRF_TIMER_INST_GET(TIMER_INST_IDX));
-
-#endif  
-
-#if CONFIG_NRFX_PWM_GRTC
-    #include <nrfx_grtc.h>
-    #include <hal/nrf_gpio.h>
-    #define GRTC_PWM_PIN 0x03
-    #define GRTC_PWM_PULSE (255/4) 
-#endif
-
-#if CONFIG_PWM
-    #include <zephyr/drivers/pwm.h>
-    #define PWM_PERIOD  PWM_USEC(7812)
-    #define PWM_PULSE  ( ( PWM_PERIOD) / 4 ) 
-    static const struct pwm_dt_spec pwm_led0 = PWM_DT_SPEC_GET(DT_NODELABEL(pwm_out0));
-#endif
 
 #define DEVICE_NAME             CONFIG_BT_DEVICE_NAME
 #define DEVICE_NAME_LEN         (sizeof(DEVICE_NAME) - 1)
@@ -119,87 +95,15 @@ static void recycled_cb(void)
     advertising_start();
 }
 
-#ifdef CONFIG_BT_LBS_SECURITY_ENABLED
-static void security_changed(struct bt_conn *conn, bt_security_t level,
-                 enum bt_security_err err)
-{
-    char addr[BT_ADDR_LE_STR_LEN];
-
-    bt_addr_le_to_str(bt_conn_get_dst(conn), addr, sizeof(addr));
-
-    if (!err) {
-        printk("Security changed: %s level %u\n", addr, level);
-    } else {
-        printk("Security failed: %s level %u err %d %s\n", addr, level, err,
-               bt_security_err_to_str(err));
-    }
-}
-#endif
-
 BT_CONN_CB_DEFINE(conn_callbacks) = {
     .connected        = connected,
     .disconnected     = disconnected,
     .recycled         = recycled_cb,
-#ifdef CONFIG_BT_LBS_SECURITY_ENABLED
-    .security_changed = security_changed,
-#endif
 };
-
-#if defined(CONFIG_BT_LBS_SECURITY_ENABLED)
-static void auth_passkey_display(struct bt_conn *conn, unsigned int passkey)
-{
-    char addr[BT_ADDR_LE_STR_LEN];
-
-    bt_addr_le_to_str(bt_conn_get_dst(conn), addr, sizeof(addr));
-
-    printk("Passkey for %s: %06u\n", addr, passkey);
-}
-
-static void auth_cancel(struct bt_conn *conn)
-{
-    char addr[BT_ADDR_LE_STR_LEN];
-
-    bt_addr_le_to_str(bt_conn_get_dst(conn), addr, sizeof(addr));
-
-    printk("Pairing cancelled: %s\n", addr);
-}
-
-static void pairing_complete(struct bt_conn *conn, bool bonded)
-{
-    char addr[BT_ADDR_LE_STR_LEN];
-
-    bt_addr_le_to_str(bt_conn_get_dst(conn), addr, sizeof(addr));
-
-    printk("Pairing completed: %s, bonded: %d\n", addr, bonded);
-}
-
-static void pairing_failed(struct bt_conn *conn, enum bt_security_err reason)
-{
-    char addr[BT_ADDR_LE_STR_LEN];
-
-    bt_addr_le_to_str(bt_conn_get_dst(conn), addr, sizeof(addr));
-
-    printk("Pairing failed conn: %s, reason %d %s\n", addr, reason,
-           bt_security_err_to_str(reason));
-}
-
-static struct bt_conn_auth_cb conn_auth_callbacks = {
-    .passkey_display = auth_passkey_display,
-    .cancel = auth_cancel,
-};
-
-static struct bt_conn_auth_info_cb conn_auth_info_callbacks = {
-    .pairing_complete = pairing_complete,
-    .pairing_failed = pairing_failed
-};
-#else
-static struct bt_conn_auth_cb conn_auth_callbacks;
-static struct bt_conn_auth_info_cb conn_auth_info_callbacks;
-#endif
 
 static void app_led_cb(bool led_state)
 {
-
+    (void) led_state;
 }
 
 static bool app_button_cb(void)
@@ -213,113 +117,11 @@ static struct bt_lbs_cb lbs_callbacs = {
 };
 
 
-#if CONFIG_WATCHDOG
- 
-#ifndef WDT_MAX_WINDOW
-#define WDT_MAX_WINDOW  5000U
-#endif
-
-#ifndef WDT_MIN_WINDOW
-#define WDT_MIN_WINDOW  0U
-#endif
-
-
-static struct wdt_timeout_cfg wdt_config = {
-        .window = {
-            .min = WDT_MIN_WINDOW,
-            .max = WDT_MAX_WINDOW
-        },
-        .callback = NULL,
-        .flags = WDT_FLAG_RESET_SOC
-};
-
-static int init_watchdog(const struct device * wdt)
-{
-    int wdt_channel_id;
-    int err = -1;
-    printk("Watchdog sample application\n");
-
-    if (!device_is_ready(wdt)) {
-        printk("%s: device not ready.\n", wdt->name);
-        return err;
-    }
-
-    wdt_channel_id = wdt_install_timeout(wdt, &wdt_config);
-    if (wdt_channel_id == -ENOTSUP) {
-        /* IWDG driver for STM32 doesn't support callback */
-        printk("Callback support rejected, continuing anyway\n");
-        wdt_config.callback = NULL;
-        wdt_channel_id = wdt_install_timeout(wdt, &wdt_config);
-    }
-    if (wdt_channel_id < 0) {
-        printk("Watchdog install error\n");
-        return wdt_channel_id;
-    }
-
-    err = wdt_setup(wdt, WDT_OPT_PAUSE_HALTED_BY_DBG);
-    if (err < 0) {
-        printk("Watchdog setup error\n");
-        return err;
-    }
-    
-    wdt_feed(wdt, wdt_channel_id);
-
-    return wdt_channel_id;
-}
-#endif
-
-#if CONFIG_NRFX_PWM_GRTC
-static void set_grtc_pwm(uint8_t duty_cycle)
-{
-    nrf_gpio_pin_control_select(GRTC_PWM_PIN, NRF_GPIO_PIN_SEL_GRTC);
-    nrf_grtc_pwm_compare_set(NRF_GRTC, duty_cycle);
-    nrf_grtc_task_trigger(NRF_GRTC, NRF_GRTC_TASK_PWM_START);
-}
-#endif
-
-#if CONFIG_NRFX_TIMER
-static void enable_timer(nrfx_timer_t * timer, uint32_t frequency_mhz)
-{
-     nrfx_timer_config_t config = NRFX_TIMER_DEFAULT_CONFIG(NRFX_MHZ_TO_HZ(frequency_mhz));
-    config.bit_width = NRF_TIMER_BIT_WIDTH_32;
-    config.p_context = "Some context";
-
-    if(nrfx_timer_init(timer, &config, NULL) != 0)
-    {
-        return;
-    }
-    nrfx_timer_clear(timer);
-    nrfx_timer_enable(timer);
-}
-#endif
-
 int main(void)
 {
     int err;
 
-    #if CONFIG_NRFX_PWM_GRTC
-        set_grtc_pwm(GRTC_PWM_PULSE);   
-    #endif    
-
-    #if CONFIG_PWM
-        pwm_set_dt(&pwm_led0, PWM_PERIOD, PWM_PULSE);
-    #endif
-
     printk("Starting Bluetooth Peripheral LBS sample\n");
-
-    if (IS_ENABLED(CONFIG_BT_LBS_SECURITY_ENABLED)) {
-        err = bt_conn_auth_cb_register(&conn_auth_callbacks);
-        if (err) {
-            printk("Failed to register authorization callbacks.\n");
-            return 0;
-        }
-
-        err = bt_conn_auth_info_cb_register(&conn_auth_info_callbacks);
-        if (err) {
-            printk("Failed to register authorization info callbacks.\n");
-            return 0;
-        }
-    }
 
     err = bt_enable(NULL);
     if (err) {
@@ -328,10 +130,6 @@ int main(void)
     }
 
     printk("Bluetooth initialized\n");
-
-    if (IS_ENABLED(CONFIG_SETTINGS)) {
-        settings_load();
-    }
 
     err = bt_lbs_init(&lbs_callbacs);
     if (err) {
@@ -342,31 +140,41 @@ int main(void)
     k_work_init(&adv_work, adv_work_handler);
     advertising_start();
 
-    //WDG
-#if CONFIG_WATCHDOG
-    const struct device *const wdt = DEVICE_DT_GET(DT_ALIAS(watchdog0));
-    int wdt_channel_id = init_watchdog(wdt);
+    #if CONFIG_WATCHDOG
+        if( init_watchdog() <0) {
+            printk("Failed to initialize watchdog \n");
+            return 0;
+        }
+    #endif
 
-    if(wdt_channel_id <0) {
-        printk("Failed to initialize watchdog (err %d)\n", wdt_channel_id);
+    #if defined(CONFIG_NRFX_TIMER00_1MHz)
+        enable_timer00(TIMER_1MHZ);
+    #endif
+
+    #if defined(CONFIG_NRFX_TIMER00_128MHz)
+        enable_timer00(TIMER_128MHZ);
+    #endif
+
+    #if defined(CONFIG_NRFX_TIMER20_1MHz)
+        enable_timer20(TIMER_1MHZ);
+    #endif
+
+    #if defined(CONFIG_NRFX_PWM_GRTC)   
+        set_grtc_pwm(CONFIG_PWM_DUTY_CYCLE);   
+    #endif    
+
+    #if defined(CONFIG_PWM) 
+    if ( set_pwm_out(CONFIG_PWM_DUTY_CYCLE ) < 0) {
+        printk("Failed to set PWM output \n");
         return 0;
     }
-#endif
-
-
-#if CONFIG_NRFX_TIMER
-    //TIMER
-    IRQ_CONNECT(NRFX_IRQ_NUMBER_GET(NRF_TIMER_INST_GET(TIMER_INST_IDX)), IRQ_PRIO_LOWEST,
-    nrfx_timer_irq_handler, &timer_inst, 20);
-    enable_timer(&timer_inst, 1);
-
-#endif
+    #endif
 
     while (1) 
     {
-        #if CONFIG_WATCHDOG
-        wdt_feed(wdt, wdt_channel_id);
+        #if defined(CONFIG_WATCHDOG)
+           watchdog_feed();
         #endif
-        k_sleep(K_MSEC(1000));
+            k_sleep(K_MSEC(1000));
     }
 }

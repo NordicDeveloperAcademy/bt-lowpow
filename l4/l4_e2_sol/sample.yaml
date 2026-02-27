@@ -19,5 +19,6 @@ common:
       - nrf54lm20dk/nrf54lm20a/cpuapp
 
 tests:
-  l4_e2.sol: {}
+  l4_e2.sol: {} 
+  
 

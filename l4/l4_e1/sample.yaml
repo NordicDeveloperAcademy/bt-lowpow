@@ -1,0 +1,13 @@
+sample:
+  description: Designing Low Power Bluetooth LE devices Lesson 4 Exercise 1 - Clock Sources
+  name: Low Power Bluetooth LE devices - Lesson 4 Exercise 1 
+
+common: 
+    sysbuild: true
+    build_only: true
+    sysbuild: true
+    skip: true
+
+tests:
+  l4_e1: {} 
+  

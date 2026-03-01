@@ -1,0 +1,8 @@
+&uart20 {
+	status="disabled";
+};
+
+&uart30 {
+	status="disabled";
+};
+

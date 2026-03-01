@@ -6,20 +6,30 @@
 
 source "Kconfig.zephyr"
 
-menu "Nordic LED-Button BLE GATT service sample"
+menu "Lesson 4 Exercise 2 config"
 
-config BT_LBS_SECURITY_ENABLED
-	bool "Enable security"
-	default y
-	select BT_SMP
-	select BT_SETTINGS
-	select FLASH
-	select FLASH_PAGE_LAYOUT
-	select FLASH_MAP
-	select ZMS if (SOC_FLASH_NRF_RRAM || SOC_FLASH_NRF_MRAM)
-	select NVS if !(SOC_FLASH_NRF_RRAM || SOC_FLASH_NRF_MRAM)
-	select SETTINGS
-	help
-	  "Enable BLE security for the LED-Button service"
+config PWM_DUTY_CYCLE
+	depends on  PWM || NRFX_PWM_GRTC
+	int "PWM duty cycle in %"
+	default 25
+
+config NRFX_PWM_GRTC
+	bool "Use GRTC for PWM"
+	default n
+
+config NRFX_TIMER00_1MHz
+	bool "Use TIMER00 at 1MHz"
+	default n
+	select NRFX_TIMER
+
+config NRFX_TIMER00_128MHz
+	bool "Use TIMER00 at 128MHz"
+	default n
+	select NRFX_TIMER
+
+config NRFX_TIMER20_1MHz
+	bool "Use TIMER20 at 1MHz"
+	default n
+	select NRFX_TIMER
 
 endmenu

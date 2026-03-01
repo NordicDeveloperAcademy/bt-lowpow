@@ -11,6 +11,8 @@
 #include <zephyr/sys/printk.h>
 #include <zephyr/sys/byteorder.h>
 #include <zephyr/kernel.h>
+
+#include <zephyr/device.h>
 #include <zephyr/drivers/gpio.h>
 #include <soc.h>
 
@@ -21,14 +23,14 @@
 #include <zephyr/bluetooth/gatt.h>
 
 #include <bluetooth/services/lbs.h>
-
 #include <zephyr/settings/settings.h>
+#include <helpers.h>
 
-#include <dk_buttons_and_leds.h>
 
 #define DEVICE_NAME             CONFIG_BT_DEVICE_NAME
 #define DEVICE_NAME_LEN         (sizeof(DEVICE_NAME) - 1)
 
+#define RANDOM_BYTES_COUNT      16
 
 #define RUN_STATUS_LED          DK_LED1
 #define CON_STATUS_LED          DK_LED2
@@ -93,87 +95,15 @@ static void recycled_cb(void)
     advertising_start();
 }
 
-#ifdef CONFIG_BT_LBS_SECURITY_ENABLED
-static void security_changed(struct bt_conn *conn, bt_security_t level,
-                 enum bt_security_err err)
-{
-    char addr[BT_ADDR_LE_STR_LEN];
-
-    bt_addr_le_to_str(bt_conn_get_dst(conn), addr, sizeof(addr));
-
-    if (!err) {
-        printk("Security changed: %s level %u\n", addr, level);
-    } else {
-        printk("Security failed: %s level %u err %d %s\n", addr, level, err,
-               bt_security_err_to_str(err));
-    }
-}
-#endif
-
 BT_CONN_CB_DEFINE(conn_callbacks) = {
     .connected        = connected,
     .disconnected     = disconnected,
     .recycled         = recycled_cb,
-#ifdef CONFIG_BT_LBS_SECURITY_ENABLED
-    .security_changed = security_changed,
-#endif
 };
-
-#if defined(CONFIG_BT_LBS_SECURITY_ENABLED)
-static void auth_passkey_display(struct bt_conn *conn, unsigned int passkey)
-{
-    char addr[BT_ADDR_LE_STR_LEN];
-
-    bt_addr_le_to_str(bt_conn_get_dst(conn), addr, sizeof(addr));
-
-    printk("Passkey for %s: %06u\n", addr, passkey);
-}
-
-static void auth_cancel(struct bt_conn *conn)
-{
-    char addr[BT_ADDR_LE_STR_LEN];
-
-    bt_addr_le_to_str(bt_conn_get_dst(conn), addr, sizeof(addr));
-
-    printk("Pairing cancelled: %s\n", addr);
-}
-
-static void pairing_complete(struct bt_conn *conn, bool bonded)
-{
-    char addr[BT_ADDR_LE_STR_LEN];
-
-    bt_addr_le_to_str(bt_conn_get_dst(conn), addr, sizeof(addr));
-
-    printk("Pairing completed: %s, bonded: %d\n", addr, bonded);
-}
-
-static void pairing_failed(struct bt_conn *conn, enum bt_security_err reason)
-{
-    char addr[BT_ADDR_LE_STR_LEN];
-
-    bt_addr_le_to_str(bt_conn_get_dst(conn), addr, sizeof(addr));
-
-    printk("Pairing failed conn: %s, reason %d %s\n", addr, reason,
-           bt_security_err_to_str(reason));
-}
-
-static struct bt_conn_auth_cb conn_auth_callbacks = {
-    .passkey_display = auth_passkey_display,
-    .cancel = auth_cancel,
-};
-
-static struct bt_conn_auth_info_cb conn_auth_info_callbacks = {
-    .pairing_complete = pairing_complete,
-    .pairing_failed = pairing_failed
-};
-#else
-static struct bt_conn_auth_cb conn_auth_callbacks;
-static struct bt_conn_auth_info_cb conn_auth_info_callbacks;
-#endif
 
 static void app_led_cb(bool led_state)
 {
-
+    (void) led_state;
 }
 
 static bool app_button_cb(void)
@@ -193,20 +123,6 @@ int main(void)
 
     printk("Starting Bluetooth Peripheral LBS sample\n");
 
-    if (IS_ENABLED(CONFIG_BT_LBS_SECURITY_ENABLED)) {
-        err = bt_conn_auth_cb_register(&conn_auth_callbacks);
-        if (err) {
-            printk("Failed to register authorization callbacks.\n");
-            return 0;
-        }
-
-        err = bt_conn_auth_info_cb_register(&conn_auth_info_callbacks);
-        if (err) {
-            printk("Failed to register authorization info callbacks.\n");
-            return 0;
-        }
-    }
-
     err = bt_enable(NULL);
     if (err) {
         printk("Bluetooth init failed (err %d)\n", err);
@@ -214,10 +130,6 @@ int main(void)
     }
 
     printk("Bluetooth initialized\n");
-
-    if (IS_ENABLED(CONFIG_SETTINGS)) {
-        settings_load();
-    }
 
     err = bt_lbs_init(&lbs_callbacs);
     if (err) {
@@ -227,9 +139,42 @@ int main(void)
 
     k_work_init(&adv_work, adv_work_handler);
     advertising_start();
-    
+
+    #if CONFIG_WATCHDOG
+        if( init_watchdog() <0) {
+            printk("Failed to initialize watchdog \n");
+            return 0;
+        }
+    #endif
+
+    #if defined(CONFIG_NRFX_TIMER00_1MHz)
+        enable_timer00(TIMER_1MHZ);
+    #endif
+
+    #if defined(CONFIG_NRFX_TIMER00_128MHz)
+        enable_timer00(TIMER_128MHZ);
+    #endif
+
+    #if defined(CONFIG_NRFX_TIMER20_1MHz)
+        enable_timer20(TIMER_1MHZ);
+    #endif
+
+    #if defined(CONFIG_NRFX_PWM_GRTC)   
+        set_grtc_pwm(CONFIG_PWM_DUTY_CYCLE);   
+    #endif    
+
+    #if defined(CONFIG_PWM) 
+    if ( set_pwm_out(CONFIG_PWM_DUTY_CYCLE ) < 0) {
+        printk("Failed to set PWM output \n");
+        return 0;
+    }
+    #endif
+
     while (1) 
     {
-        k_sleep(K_MSEC(1000));
+        #if defined(CONFIG_WATCHDOG)
+           watchdog_feed();
+        #endif
+            k_sleep(K_MSEC(1000));
     }
 }

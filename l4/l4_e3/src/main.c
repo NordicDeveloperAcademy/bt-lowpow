@@ -26,6 +26,12 @@
 
 #include <dk_buttons_and_leds.h>
 
+#if defined (CONFIG_RAM_POWER_DOWN_LIBRARY)
+#include <ram_pwrdn.h>
+#endif
+
+/* STEP 4.1 Define memory bitmask */
+
 #define DEVICE_NAME             CONFIG_BT_DEVICE_NAME
 #define DEVICE_NAME_LEN         (sizeof(DEVICE_NAME) - 1)
 
@@ -190,6 +196,9 @@ static struct bt_lbs_cb lbs_callbacs = {
 int main(void)
 {
     int err;
+
+    /* STEP 4.2 Disable unused memory blocks */
+    /* STEP 5.3 Power down unused RAM */
 
     printk("Starting Bluetooth Peripheral LBS sample\n");
 

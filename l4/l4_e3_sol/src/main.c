@@ -26,10 +26,15 @@
 
 #include <dk_buttons_and_leds.h>
 
-#include <hal/nrf_memconf.h>
+#if defined (CONFIG_RAM_POWER_DOWN_LIBRARY)
 #include <ram_pwrdn.h>
+#endif
 
+
+/* STEP 4.1 Define memory bitmask */
+#include <hal/nrf_memconf.h>
 #define RAM_96KB_DIS_SECTION_BITMASK (0x000000F8)
+
 
 #define DEVICE_NAME             CONFIG_BT_DEVICE_NAME
 #define DEVICE_NAME_LEN         (sizeof(DEVICE_NAME) - 1)
@@ -196,7 +201,10 @@ int main(void)
 {
     int err;
 
+    /* STEP 4.2 Disable unused memory blocks */
     nrf_memconf_ramblock_control_mask_enable_set(NRF_MEMCONF, 0, RAM_96KB_DIS_SECTION_BITMASK, false);
+
+    /* STEP 5.3 Power down unused RAM */
     power_down_unused_ram();
 
     printk("Starting Bluetooth Peripheral LBS sample\n");

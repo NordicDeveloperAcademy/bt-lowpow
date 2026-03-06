@@ -26,12 +26,6 @@
 
 #include <dk_buttons_and_leds.h>
 
-#if defined (CONFIG_RAM_POWER_DOWN_LIBRARY)
-#include <ram_pwrdn.h>
-#endif
-
-/* STEP 4.1 Define memory bitmask */
-
 #define DEVICE_NAME             CONFIG_BT_DEVICE_NAME
 #define DEVICE_NAME_LEN         (sizeof(DEVICE_NAME) - 1)
 
@@ -44,9 +38,7 @@
 
 #define USER_BUTTON             DK_BTN1_MSK
 
-#define BT_LE_ADV_CONN_1000                                                                      \
-    BT_LE_ADV_PARAM(BT_LE_ADV_OPT_CONN, BT_GAP_ADV_SLOW_INT_MIN, BT_GAP_ADV_SLOW_INT_MIN,  \
-            NULL)
+/* STEP 5.2 Define advertising settings*/
 
 static bool app_button_state;
 static struct k_work adv_work;
@@ -60,9 +52,10 @@ static const struct bt_data sd[] = {
     BT_DATA_BYTES(BT_DATA_UUID128_ALL, BT_UUID_LBS_VAL),
 };
 
+
 static void adv_work_handler(struct k_work *work)
 {
-    int err = bt_le_adv_start(BT_LE_ADV_CONN_1000, ad, ARRAY_SIZE(ad), sd, ARRAY_SIZE(sd));
+    /* STEP 5.3 Apply defined settings for the advertising process */
 
     if (err) {
         printk("Advertising failed to start (err %d)\n", err);
@@ -196,9 +189,6 @@ static struct bt_lbs_cb lbs_callbacs = {
 int main(void)
 {
     int err;
-
-    /* STEP 4.2 Disable unused memory blocks */
-    /* STEP 5.3 Power down unused RAM */
 
     printk("Starting Bluetooth Peripheral LBS sample\n");
 

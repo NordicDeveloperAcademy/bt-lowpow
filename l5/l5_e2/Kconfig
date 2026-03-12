@@ -1,0 +1,25 @@
+source "Kconfig.zephyr"
+
+menu "Lesson 5 Exercise 2 config"
+
+config USE_DPPI_INPUT
+    bool "Use DPPI input"
+    default n 
+
+config USE_DPPI_WORKFLOW
+    bool "Use DPPI workflow"
+    default n   
+
+config PWM_PERIOD
+    int "Output PWM period in ms"
+    default 10
+
+config OUTPUT_PATTERN_PERIOD
+    int "Output pattern period in ms"
+    default 2
+
+config OUTPUT_PATTERN_CNT
+    int "Number of pattern repetitions"
+    default 10
+
+endmenu

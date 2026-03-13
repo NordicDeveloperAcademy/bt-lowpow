@@ -10,18 +10,18 @@
 #define DEVICE_NAME     CONFIG_BT_DEVICE_NAME
 #define DEVICE_NAME_LEN (sizeof(DEVICE_NAME) - 1)
 /*
- * Dummy data to fill the 255-byte extended advertising packet.
+ * Dummy data to demonstrate extended advertising packet.
  * In a real application, replace with actual sensor readings and device info.
  */
 /*
- * Extended advertising data (255 bytes total, 10 AD structures)
+ * Extended advertising data (192 bytes total, 10 AD structures)
  *
  *  #  AD Type                Code   Bytes  Description
  *  -  ---------------------  -----  -----  ----------------------------
  *  1  Flags                  0x01       3  BLE-only (no BR/EDR)
  *  2  Complete Local Name    0x09      15  "Nordic_Beacon"
  *  3  URI                    0x24      23  https://www.nordicsemi.com
- *  4  Manufacturer Data      0xFF     166  Nordic (0x0059) sensor payload
+ *  4  Manufacturer Data      0xFF     103  Nordic (0x0059) sensor payload
  *  5  Service Data (16-bit)  0x16      15  Device Information
  *  6  Service Data (16-bit)  0x16       5  Battery Service
  *  7  Appearance             0x19       4  Generic Sensor
@@ -29,7 +29,7 @@
  *  9  UUID128 Complete       0x07      18  Custom vendor service
  * 10  LE Role                0x1C       3  Peripheral only
  *                                   -----
- *                                     255
+ *                                     192
  */
 
 
@@ -85,18 +85,10 @@ static const uint8_t manuf_data[] = {
 	0x03,                   /* Hardware revision */
 	'N','R','F','5','4','L','1','5', /* Serial number */
 
-	/* Reserved (83 bytes) */
+	/* Reserved (20 bytes) */
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00,
 };
 
 /* Service data: Device Information (UUID 0x180A) */

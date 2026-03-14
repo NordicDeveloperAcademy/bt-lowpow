@@ -1,1 +1,0 @@
-#include <nrfx_timer.h>

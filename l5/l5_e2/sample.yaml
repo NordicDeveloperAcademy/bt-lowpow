@@ -1,6 +1,6 @@
 sample:
-  description: Designing Low Power Bluetooth LE devices Lesson 4 Exercise 2 - Peripherals
-  name: Low Power Bluetooth LE devices - Lesson 4 Exercise 2 
+  description: Designing Low Power Bluetooth LE devices Lesson 5 Exercise 2 - DPPI
+  name: Low Power Bluetooth LE devices - Lesson 5 Exercise 2 
 
 common: 
     sysbuild: true
@@ -19,6 +19,5 @@ common:
       - nrf54lm20dk/nrf54lm20a/cpuapp
 
 tests:
-  l4_e2.sol: {} 
+  l5_e2: {} 
   
-

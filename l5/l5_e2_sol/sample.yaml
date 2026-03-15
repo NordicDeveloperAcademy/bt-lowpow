@@ -1,0 +1,17 @@
+sample:
+  description: Designing Low Power Bluetooth LE devices Lesson 5 Exercise 2 - DPPI
+  name: Low Power Bluetooth LE devices - Lesson 5 Exercise 2 
+
+common: 
+    sysbuild: true
+    build_only: true
+    integration_platforms:
+      - nrf54l15dk/nrf54l15/cpuapp
+
+    platform_allow:
+      - nrf54l15dk/nrf54l15/cpuapp
+
+
+tests:
+  l5_e2_sol: {} 
+  

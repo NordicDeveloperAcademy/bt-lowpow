@@ -277,32 +277,26 @@ int gpio_output_init(bool use_ppi)
     return status;
 }
 
-
 int main(void)
 {
+    gpio_output_init(IS_ENABLED(CONFIG_USE_PPI_WORKFLOW));  
+    gpio_input_init(IS_ENABLED(CONFIG_USE_PPI_WORKFLOW));
+    timer_workflow_init(IS_ENABLED(CONFIG_USE_PPI_WORKFLOW));
 
+    int err;
 
-gpio_output_init(IS_ENABLED(CONFIG_USE_PPI_WORKFLOW));  
-gpio_input_init(IS_ENABLED(CONFIG_USE_PPI_WORKFLOW));
-timer_workflow_init(IS_ENABLED(CONFIG_USE_PPI_WORKFLOW));
-
-
-
-int err;
-
-if (!pwm_is_ready_dt(&pwm_led0)) {
+    if (!pwm_is_ready_dt(&pwm_led0)) {
     printk("PWM device is not ready\n");
     return -ENODEV;
-}
+    }
 
-err = pwm_set_dt(&pwm_led0, PWM_USEC(CONFIG_PWM_OUTPUT_PERIOD_US), PWM_USEC(CONFIG_PWM_OUTPUT_PERIOD_US/2));
-if (err) {
+    err = pwm_set_dt(&pwm_led0, PWM_USEC(CONFIG_PWM_OUTPUT_PERIOD_US), PWM_USEC(CONFIG_PWM_OUTPUT_PERIOD_US/2));
+    if (err) {
     printk("Error %d: failed to set PWM\n", err);
     return err;
-}
-    
-return 0;
+    }
 
+    return 0;
 }
 
 /** @} */

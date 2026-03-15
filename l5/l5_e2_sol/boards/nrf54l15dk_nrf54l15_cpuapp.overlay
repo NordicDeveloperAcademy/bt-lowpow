@@ -40,15 +40,10 @@
     zephyr,code = <INPUT_KEY_0>;
 };
 
-// &gpio1 {
-//    // STEP 7 Disable the GPIOTE IN event on pin 13 (button 0) 
-//  sense-edge-mask = <(1 << 13)>;
-// };
-
-/ { pwm_node:pwm_node{
-        compatible= "pwm-leds";
+/ { pwm_node: pwm_node{
+        compatible = "pwm-leds";
         pwm_out0: pwm_out0 {
             pwms = <&pwm21 0 PWM_MSEC(10) PWM_POLARITY_NORMAL>;
         };
-};
+    };
 };

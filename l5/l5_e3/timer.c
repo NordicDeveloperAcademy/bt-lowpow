@@ -17,7 +17,7 @@ static const uint16_t * _pattern_ptr;
 static struct gpio_dt_spec * _led;
 
 /**
- * @brief Function for handling TIMER driver events.
+ * @brief Function for handling TIMER driver events. 
  *
  * @param[in] event_type Timer event.
  * @param[in] p_context  General purpose parameter set during initialization of

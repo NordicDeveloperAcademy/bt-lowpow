@@ -37,21 +37,23 @@
 /** @brief TIMER instance used in the example. */
 static struct gpio_dt_spec led = GPIO_DT_SPEC_GET_OR(DT_ALIAS(led1), gpios, {0});
 
-/**
- * @brief Function for application main entry.
- *
- * @return Nothing.
- */
+
 int main(void)
 {
 
-#if CONFIG_NRFX_TIMER
-    init_timer(&led, pattern, PATTERN_SIZE, IS_ENABLED(CONFIG_PATTERN_TIMER_W_CPU));
+#if CONFIG_PATTERN_DISABLED
+   init_timer(&led, pattern, PATTERN_SIZE, false);
+#elif CONFIG_PATTERN_TIMER_W_CPU
+   init_timer(&led, pattern, PATTERN_SIZE, true);
+#elif CONFIG_PATTERN_PWM_SIMPLE
+    init_pwm_simple(pattern, PATTERN_SIZE);
+#elif CONFIG_PATTERN_PWM_COMPLEX
+    init_pwm_complex(&pattern[PATTERN_SIZE/2], PATTERN_SIZE/2, 
+                     pattern2, PATTERN_SIZE, 
+                     pattern, PATTERN_SIZE/2);
 #endif
 
-
-
-    return 0;
+return 0;
 }
 
 /** @} */

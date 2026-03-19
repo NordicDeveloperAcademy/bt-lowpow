@@ -37,7 +37,13 @@ LOG_MODULE_REGISTER(Lesson3_Exercise2, LOG_LEVEL_INF);
 
 #define BT_LE_ADV_CONN BT_LE_ADV_PARAM(BT_LE_ADV_OPT_CONN, BT_GAP_ADV_SLOW_INT_MIN, BT_GAP_ADV_SLOW_INT_MAX, NULL)
 
+#define LOOP_PERIOD_MS      2000
+
+static void timer_expiry_handler(struct k_timer *timer);
+
 static K_SEM_DEFINE(ble_init_ok, 0, 1);
+
+K_TIMER_DEFINE(loop_restart_timer, timer_expiry_handler, NULL);
 
 static struct bt_conn *current_conn;
 static struct bt_conn *auth_conn;
@@ -72,11 +78,11 @@ static void exchange_func(struct bt_conn *conn, uint8_t att_err, struct bt_gatt_
 int i = 0;
 
 /* STEP 10.1 - Define a large data packet */
-uint8_t large_data[200] =
-    "NordicSemiconductor_NUS_LargePacket_ABCDEFGHIJKLMNOPQRSTUVWXYZ_"
+uint8_t large_data[233] =
+    "a_NordicSemiconductor_NUS_LargePacket_ABCDEFGHIJKLMNOPQRSTUVWXYZ_"
     "abcdefghijklmnopqrstuvwxyz_0123456789_ABCDEFGHIJKLMNOPQRSTUVWXYZ_ab"
-    "cdefghijklmnopqrstuvwxyz_0123456789_NordicSemiconductor_EndOfPacket";
-
+    "cdefghijklmno_ABCDEFGHIJKLMNOPQRSTUVWXYZ_"
+    "Nordic_Developer_Academy_NordicSemiconductor_EndOfPacket";
 
 static void adv_work_handler(struct k_work *work)
 {
@@ -127,7 +133,7 @@ static void request_data_len_update(struct bt_conn *conn)
 }
 
 /* STEP 12.2 Request a PHY update */
-static void request_phy_update(struct bt_conn *conn)
+/*static void request_phy_update(struct bt_conn *conn)
 {
     int err;
     const struct bt_conn_le_phy_param preferred_phy = {
@@ -141,7 +147,7 @@ static void request_phy_update(struct bt_conn *conn)
         LOG_ERR("bt_conn_le_phy_update() returned %d", err);
         #endif //CONFIG_DEVACADEMY_APP_DEBUGGING
     }
-}
+}*/
 
 
 static void connected(struct bt_conn *conn, uint8_t err)
@@ -171,10 +177,10 @@ LOG_INF("Connection parameters: interval %.2f ms, latency %d intervals, timeout 
 
  /* STEP 9 - Request an MTU exchange and data length update */
  request_mtu_exchange(current_conn);
- request_data_len_update(current_conn);
+ //request_data_len_update(current_conn);
 
  /* STEP 12.3 - Request a PHY update*/
- request_phy_update(current_conn);
+ //request_phy_update(current_conn);
 }
 
 static void disconnected(struct bt_conn *conn, uint8_t reason)
@@ -245,8 +251,8 @@ BT_CONN_CB_DEFINE(conn_callbacks) = {
  .disconnected           = disconnected,
  .recycled               = recycled_cb,
  .le_param_updated       = on_le_param_updated,
- .le_data_len_updated    = on_le_data_len_updated,
- .le_phy_updated     = on_le_phy_updated,
+ //.le_data_len_updated    = on_le_data_len_updated,
+ //.le_phy_updated     = on_le_phy_updated,
 };
 
 static void bt_receive_cb(struct bt_conn *conn, const uint8_t *const data,
@@ -258,8 +264,19 @@ static void bt_receive_cb(struct bt_conn *conn, const uint8_t *const data,
 
 }
 
+static void bt_notif_enabled_cb(enum bt_nus_send_status status)
+{
+    #if defined(CONFIG_DEVACADEMY_APP_DEBUGGING)
+    LOG_INF("Notifications enabled, starting to send packets");
+    #endif //CONFIG_DEVACADEMY_APP_DEBUGGING
+    /* Start timer for sending data */
+    /* STEP 10.4 - Start the timer to begin sending data packets */
+    k_timer_start(&loop_restart_timer, K_NO_WAIT, K_MSEC(LOOP_PERIOD_MS));
+}
+
 static struct bt_nus_cb nus_cb = {
  .received = bt_receive_cb,
+ .send_enabled = bt_notif_enabled_cb,
 };
 
 void error(void)
@@ -283,19 +300,23 @@ static void exchange_func(struct bt_conn *conn, uint8_t att_err,
 }
 #endif //CONFIG_DEVACADEMY_APP_DEBUGGING
 
-/* STEP 10.2 - Define the button handler to send a large packet over NUS */
-static void button_handler(uint32_t button_state, uint32_t has_changed)
+/* STEP 10.2 - Send a large packet over NUS */
+static void timer_expiry_handler(struct k_timer *timer)
 {
-    if (has_changed & DK_BTN1_MSK && button_state & DK_BTN1_MSK) {
-        i++;
-        uint8_t data_packet[201];
-        sprintf(data_packet, "%d%s", i, large_data);
-        if (bt_nus_send(current_conn, data_packet, sizeof(data_packet))) {
-          #if defined(CONFIG_DEVACADEMY_APP_DEBUGGING)
+     #if defined(CONFIG_DEVACADEMY_APP_DEBUGGING)
+     LOG_INF("Sending data packet");
+     #endif //CONFIG_DEVACADEMY_APP_DEBUGGING
+        
+     large_data[0]++;
+     if (large_data[0] > 'z') {
+          large_data[0] = 'a';
+     }
+ 
+     if (bt_nus_send(current_conn, large_data, sizeof(large_data))) {
+     #if defined(CONFIG_DEVACADEMY_APP_DEBUGGING)
           LOG_ERR("Couldn't send notification");
           #endif //CONFIG_DEVACADEMY_APP_DEBUGGING
-        }
-    }
+     }
 }
 
 int main(void)
@@ -307,10 +328,10 @@ LOG_INF("Starting Lesson 3 Exercise 2");
 #endif //CONFIG_DEVACADEMY_APP_DEBUGGING
 
 /* STEP 10.3 - Initialize the button handler */
- err = dk_buttons_init(button_handler);
+ /*err = dk_buttons_init(button_handler);
  if (err) {
   return 0;
- }
+ }*/
 
  err = bt_enable(NULL);
  if (err) {

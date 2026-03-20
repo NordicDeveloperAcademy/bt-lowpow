@@ -76,9 +76,9 @@ int init_timer(struct gpio_dt_spec * led_spec, const uint16_t * pattern_ptr, uin
 
     nrfx_timer_clear(&timer_inst);
 
-    nrfx_timer_extended_compare(&timer_inst, NRF_TIMER_CC_CHANNEL0, TIMER_COMPARE_CH0_VALUE, NRF_TIMER_SHORT_COMPARE0_CLEAR_MASK, true);
+    nrfx_timer_extended_compare(&timer_inst, NRF_TIMER_CC_CHANNEL0, TIMER_COMPARE_CH0_VALUE, NRF_TIMER_SHORT_COMPARE0_CLEAR_MASK, enable_pattern? true : false);
 
-    nrfx_timer_compare(&timer_inst, NRF_TIMER_CC_CHANNEL1, _pattern_ptr[0], true);
+    nrfx_timer_compare(&timer_inst, NRF_TIMER_CC_CHANNEL1, _pattern_ptr[0], enable_pattern? true : false);
 
     nrfx_timer_enable(&timer_inst);
 

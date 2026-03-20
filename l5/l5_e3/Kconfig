@@ -5,9 +5,9 @@ menu "Lesson 5 Exercise 3 config"
 
 choice GPIO_PATTERN
     bool "GPIO pattern choice"
-    default PATERN_DISABLED
+    default PATTERN_DISABLED
 
-config PATERN_DISABLED
+config PATTERN_DISABLED
     bool "NO_PATTERN"
 
 config PATTERN_TIMER_W_CPU

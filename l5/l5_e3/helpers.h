@@ -46,7 +46,6 @@ int init_pwm_complex( const uint16_t * pattern_rising_ptr, uint32_t pattern_risi
 /**
  * @brief Initialize a hardware timer to drive an LED using the given pattern.
  *
- * @param[in] led_spec       Pointer to the GPIO device-tree spec for the LED.
  * @param[in] pattern_ptr    Pointer to the pattern lookup table.
  * @param[in] pattern_size   Number of entries in the pattern.
  * @param[in] enable_pattern If true, start pattern playback immediately.
@@ -54,7 +53,7 @@ int init_pwm_complex( const uint16_t * pattern_rising_ptr, uint32_t pattern_risi
  * @retval 0 on success.
  * @retval Negative errno on failure.
  */
-int init_timer(struct gpio_dt_spec * led_spec, const uint16_t * pattern_ptr, uint32_t pattern_size, bool enable_pattern);   
+int init_timer( const uint16_t * pattern_ptr, uint32_t pattern_size, bool enable_pattern);   
 
 
 #endif /* HELPERS_H */

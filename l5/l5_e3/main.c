@@ -34,17 +34,14 @@
 #include "helpers.h"
 
 
-/** @brief TIMER instance used in the example. */
-static struct gpio_dt_spec led = GPIO_DT_SPEC_GET_OR(DT_ALIAS(led1), gpios, {0});
-
 
 int main(void)
 {
 
 #if CONFIG_PATTERN_DISABLED
-   init_timer(&led, pattern, PATTERN_SIZE, false);
+   init_timer(pattern, PATTERN_SIZE, false);
 #elif CONFIG_PATTERN_TIMER_W_CPU
-   init_timer(&led, pattern, PATTERN_SIZE, true);
+   init_timer( pattern, PATTERN_SIZE, true);
 #elif CONFIG_PATTERN_PWM_SIMPLE
     init_pwm_simple(pattern, PATTERN_SIZE);
 #elif CONFIG_PATTERN_PWM_COMPLEX

@@ -1,0 +1,22 @@
+sample:
+  description: Designing Low Power Bluetooth LE devices Lesson 7 Exercise 1 - Setting Up the Memfault SDK
+  name: Low Power Bluetooth LE devices - Lesson 7 Exercise 1
+
+common:
+    sysbuild: true
+    build_only: true
+    skip: true
+
+    integration_platforms:
+      - nrf54l15dk/nrf54l15/cpuapp
+      - nrf54l15dk/nrf54l10/cpuapp
+      - nrf54l15dk/nrf54l05/cpuapp
+      - nrf54lm20dk/nrf54lm20a/cpuapp
+    platform_allow:
+      - nrf54l15dk/nrf54l15/cpuapp
+      - nrf54l15dk/nrf54l10/cpuapp
+      - nrf54l15dk/nrf54l05/cpuapp
+      - nrf54lm20dk/nrf54lm20a/cpuapp
+
+tests:
+  l7.e1: {}

@@ -1,0 +1,9 @@
+sample:
+  name: Lesson 6 Exercise - PMIC SW development
+
+tests:
+  sample.l6_e1:
+    platform_allow:
+      - nrf54l15dk/nrf54l15/cpuapp
+    sysbuild: true
+    build_only: true

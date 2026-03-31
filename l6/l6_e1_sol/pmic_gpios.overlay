@@ -1,0 +1,14 @@
+/*
+ * Copyright (C) 2026 Nordic Semiconductor ASA
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+&npm2100_pmic {
+    /* 1.a. Add active-high interrupt input (P0.02) */
+    host-int-gpios = <&gpio0 2 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>;
+};
+
+&npm2100_regulators {
+    /* 1.b. Add active-low LDSW control output (P0.03) */
+    dvs-gpios = <&gpio0 3 GPIO_ACTIVE_LOW>;
+};

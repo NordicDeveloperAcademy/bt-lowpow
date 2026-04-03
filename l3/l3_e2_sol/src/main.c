@@ -115,12 +115,12 @@ static void request_data_len_update(struct bt_conn *conn)
     }
 }
 
-/* STEP 15.2 Request a PHY update */
 static void request_phy_update(struct bt_conn *conn)
 {
     int err;
     const struct bt_conn_le_phy_param preferred_phy = {
         .options = BT_CONN_LE_PHY_OPT_NONE,
+        /* STEP 15 - Set the preferred PHY to 2M */
         .pref_rx_phy = BT_GAP_LE_PHY_2M,
         .pref_tx_phy = BT_GAP_LE_PHY_2M,
     };
@@ -148,14 +148,15 @@ if (err) {
 	return;
 }
 
+ request_phy_update(current_conn);
+
  /* STEP 8 - Request an MTU exchange */
  request_mtu_exchange(current_conn);
 
  /* STEP 12 - Request a data length update */
  request_data_len_update(current_conn);
 
- /* STEP 15.3 - Request a PHY update */
- request_phy_update(current_conn);
+
 }
 
 static void disconnected(struct bt_conn *conn, uint8_t reason)
@@ -197,10 +198,10 @@ static void bt_receive_cb(struct bt_conn *conn, const uint8_t *const data,
 
 static void bt_notif_enabled_cb(enum bt_nus_send_status status)
 {
+    /* STEP 9.4 - Start the timer only when notifications are enabled */
     switch (status) 
     {
         case BT_NUS_SEND_STATUS_ENABLED:
-            /* STEP 9.4 - Start the timer to begin sending data packets */
             k_timer_start(&loop_restart_timer, K_NO_WAIT, K_MSEC(LOOP_PERIOD_MS));
             break;
         case BT_NUS_SEND_STATUS_DISABLED:

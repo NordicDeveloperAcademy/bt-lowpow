@@ -19,5 +19,5 @@ common:
       - nrf54lm20dk/nrf54lm20a/cpuapp
 
 tests:
-  l5_e2: {} 
+  l5.e2: {}
   

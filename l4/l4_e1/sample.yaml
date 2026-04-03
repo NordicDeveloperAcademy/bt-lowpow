@@ -9,5 +9,5 @@ common:
     skip: true
 
 tests:
-  l4_e1: {} 
+  l4.e1: {}
   

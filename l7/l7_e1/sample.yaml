@@ -1,13 +1,11 @@
 sample:
-  description: Designing Low Power Bluetooth LE devices Lesson 4 Exercise 3 - Memory Retention
-  name: Low Power Bluetooth LE devices - Lesson 4 Exercise 3 
+  description: Designing Low Power Bluetooth LE devices Lesson 7 Exercise 1 - Setting Up the Memfault SDK
+  name: Low Power Bluetooth LE devices - Lesson 7 Exercise 1
 
-
-common: 
+common:
     sysbuild: true
     build_only: true
     skip: true
-    sysbuild: true
 
     integration_platforms:
       - nrf54l15dk/nrf54l15/cpuapp
@@ -21,5 +19,4 @@ common:
       - nrf54lm20dk/nrf54lm20a/cpuapp
 
 tests:
-  l4.e3: {}
-
+  l7.e1: {}

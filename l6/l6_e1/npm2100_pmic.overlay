@@ -1,1 +1,68 @@
-/* placeholder for the PowerUP exported overlay */
+/*
+* Copyright (C) 2025 Nordic Semiconductor ASA
+* SPDX-License-Identifier: Apache-2.0
+*/
+
+#include <dt-bindings/regulator/npm2100.h>
+#include <zephyr/dt-bindings/input/input-event-codes.h>
+#include <zephyr/dt-bindings/gpio/nordic-npm2100-gpio.h>
+
+&arduino_i2c {
+    npm2100_pmic: pmic@74 {
+        compatible = "nordic,npm2100";
+        reg = <0x74>;
+
+        
+        host-int-type = "level";
+        pmic-int-pin = <0>;
+        pmic-int-flags = <(GPIO_ACTIVE_HIGH)>;
+            
+        
+
+        shiphold-longpress = "ship";
+        
+
+        npm2100_gpio: gpio-controller {
+            compatible = "nordic,npm2100-gpio";
+            gpio-controller;
+            #gpio-cells = <2>;
+            ngpios = <2>;
+        };
+
+        npm2100_regulators: regulators {
+            compatible = "nordic,npm2100-regulator";
+
+            npm2100_boost: BOOST {
+                regulator-always-on;
+                regulator-min-microvolt = <1800000>;
+                regulator-max-microvolt = <3300000>;
+
+                
+                regulator-init-microamp = <300000>;
+                
+                
+            };
+
+
+            npm2100_ldosw: LDOSW {
+                regulator-min-microvolt = <800000>;
+                regulator-max-microvolt = <3000000>;
+ 
+                regulator-boot-on;
+                
+                regulator-init-microamp = <75000>;
+                regulator-initial-mode = <(NPM2100_REG_OPER_OFF | NPM2100_REG_FORCE_HP | NPM2100_REG_LDSW_EN)>;
+                mode-gpios = <&npm2100_gpio 1 (GPIO_ACTIVE_LOW  | GPIO_PULL_UP | NPM2100_GPIO_DEBOUNCE_OFF)>;
+            };
+
+        };
+
+        npm2100_wdt: watchdog {
+            compatible = "nordic,npm2100-wdt";
+        };
+
+        npm2100_vbat: vbat {
+            compatible = "nordic,npm2100-vbat";
+        };
+   };
+};

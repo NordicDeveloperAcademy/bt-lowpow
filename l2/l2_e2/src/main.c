@@ -1,7 +1,9 @@
+/* STEP 1.2 - Add advertising parameters, enable the Bluetooth stack and start advertising */
 #include <zephyr/bluetooth/bluetooth.h>
 
-#define DEVICE_NAME "power"
-#define ADV_INTERVAL_MS 1000
+#define DEVICE_NAME "power" 
+/* STEP 2.1 - Set the advertising interval to 100 ms */
+#define ADV_INTERVAL_MS 100
 
 const struct bt_le_adv_param *adv_params =
 	BT_LE_ADV_PARAM(

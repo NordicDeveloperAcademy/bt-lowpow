@@ -1,0 +1,4 @@
+&gpio1 {
+   // STEP 7 Disable the GPIOTE IN event on pin 26 (button 0)
+ sense-edge-mask = <(1 << 26)>;
+};

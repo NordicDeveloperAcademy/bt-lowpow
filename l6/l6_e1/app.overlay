@@ -21,11 +21,6 @@
 	};
 };
 
-&uart30 {
-	/* uart30 uses pins P0.02 and P0.03, we need them for interfacing with the PMIC */
-	status = "disabled";
-};
-
 /* nPM PowerUP exported overlay refers to `arduino_i2c` */
 arduino_i2c: &i2c21 {
 	status = "okay";

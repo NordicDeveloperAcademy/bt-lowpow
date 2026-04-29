@@ -38,7 +38,7 @@
 
 #define USER_BUTTON             DK_BTN1_MSK
 
-/* STEP 8.1 Define advertising settings*/
+/* STEP 8.1 - Define advertising settings */
 #define BT_LE_ADV_CONN_100                                                                      \
     BT_LE_ADV_PARAM(BT_LE_ADV_OPT_CONN, BT_GAP_ADV_FAST_INT_MIN_2, BT_GAP_ADV_FAST_INT_MIN_2,  \
             NULL)
@@ -57,9 +57,8 @@ static const struct bt_data sd[] = {
 
 static void adv_work_handler(struct k_work *work)
 {
-    /* STEP 8.2 Apply defined settings for the advertising process */
+    /* STEP 8.2 - Apply defined settings for the advertising process */
     int err = bt_le_adv_start(BT_LE_ADV_CONN_100, ad, ARRAY_SIZE(ad), sd, ARRAY_SIZE(sd));
-
     if (err) {
         printk("Advertising failed to start (err %d)\n", err);
         return;

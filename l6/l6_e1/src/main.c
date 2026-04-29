@@ -77,22 +77,11 @@ void display_vbat(void) {
 	int ret;
 	struct sensor_value val;
 
-	/* 2. Display battery voltage using Zephyr Sensor API */
-	/* 2.a. Fetch a new measurement */
-	/* ret = ;
-	 * if (ret < 0) {
-	 * 	LOG_ERR("failed to fetch (%d)", ret);
-	 * }
-	 */
+	/* STEP 3.1 - Fetch a new measurement */
 
-	/* 2.b. Get the SENSOR_CHAN_GAUGE_VOLTAGE channel result */
-	/* ret = ;
-	 * if (ret < 0) {
-	 * 	LOG_ERR("failed to get voltage channel (%d)", ret);
-	 * }
-	 */
+	/* STEP 3.2 - Get the SENSOR_CHAN_GAUGE_VOLTAGE channel result */
 
-	/* LOG_INF("VBAT: %d.%03d V", val.val1, val.val2 / 1000); */
+	LOG_INF("VBAT: %d.%03d V", val.val1, val.val2 / 1000);
 }
 
 int main(void) {
@@ -111,21 +100,9 @@ int main(void) {
 
 	k_work_init(&shphld_work, shphld_handler);
 
-	/* 1. Prepare and add nPM2100 SHPHLD callback */
-	/* 
-	 * 1.a. Initialize the npm2100 callback `shphld_cb` for SHPHLD pin's rising and falling edges.
-	 *      Use enum mfd_npm2100_event to specify events in the form `BIT(EVENT1) | BIT(EVENT2)`.
-	 *      Use the already defined `events_handler` function as the handler.
-	 */
-	/* gpio_init_callback(); */
+	/* STEP 2.1 - Initialize the npm2100 callback  */
 
-	/* 1.b. Add the npm2100 callback `shphld_cb` to the mfd driver. */
-	/* ret = ;
-	 * if (ret < 0) {
-	 * 	LOG_ERR("failed to add a callback (%d)", ret);
-	 * 	return ret;
-	 * }
-	 */
+	/* STEP 2.2 - Add the npm2100 callback `shphld_cb` to the mfd driver. */
 
 	LOG_INF("PMIC device ok");
 

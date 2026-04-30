@@ -4,11 +4,11 @@
  */
 
 &npm2100_pmic {
-    /* STEP 1.1 - Add active-high interrupt input (P0.02) */
+    /* STEP 3.1.1 - Add active-high interrupt input (P0.02) */
     host-int-gpios = <&gpio0 2 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>;
 };
 
 &npm2100_regulators {
-    /* STEP 1.2 - Add active-low LDSW control output (P0.03) */
+    /* STEP 3.1.2 - Add active-low LDSW control output (P0.03) */
     dvs-gpios = <&gpio0 3 GPIO_ACTIVE_LOW>;
 };

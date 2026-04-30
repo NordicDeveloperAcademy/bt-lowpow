@@ -95,11 +95,11 @@ void events_handler(const struct device *dev, struct gpio_callback *cb, uint32_t
 int get_voltages(struct sensor_value *vbat, struct sensor_value *vout) {
 	int ret;
 
-	/* STEP 3.1 - Fetch a new measurement */
+	/* STEP 4.2.1 - Fetch a new measurement */
 
-	/* STEP 3.2 - Get the SENSOR_CHAN_GAUGE_VOLTAGE channel result into vbat */
+	/* STEP 4.2.2 - Get the SENSOR_CHAN_GAUGE_VOLTAGE channel result into vbat */
 
-	/* STEP 3.3 - Get the SENSOR_CHAN_VOLTAGE channel result into vout */
+	/* STEP 4.2.3 - Get the SENSOR_CHAN_VOLTAGE channel result into vout */
 
 	return 0;
 }
@@ -134,9 +134,9 @@ int main(void) {
 
 	k_work_init(&shphld_work, shphld_handler);
 
-	/* STEP 2.1 - Initialize the npm2100 callback  */
+	/* STEP 4.1.1 - Initialize the npm2100 callback  */
 
-	/* STEP 2.2 - Add the npm2100 callback `shphld_cb` to the mfd driver. */
+	/* STEP 4.1.2 - Add the npm2100 callback `shphld_cb` to the mfd driver. */
 
 	LOG_INF("PMIC device ok");
 

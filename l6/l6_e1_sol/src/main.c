@@ -95,21 +95,21 @@ void events_handler(const struct device *dev, struct gpio_callback *cb, uint32_t
 int get_voltages(struct sensor_value *vbat, struct sensor_value *vout) {
 	int ret;
 
-	/* STEP 3.1 - Fetch a new measurement */
+	/* STEP 4.2.1 - Fetch a new measurement */
 	ret = sensor_sample_fetch(npm2100_adc);
 	if (ret < 0) {
 		LOG_ERR("failed to fetch (%d)", ret);
 		return ret;
 	}
 
-	/* STEP 3.2 - Get the SENSOR_CHAN_GAUGE_VOLTAGE channel result into vbat */
+	/* STEP 4.2.2 - Get the SENSOR_CHAN_GAUGE_VOLTAGE channel result into vbat */
 	ret = sensor_channel_get(npm2100_adc, SENSOR_CHAN_GAUGE_VOLTAGE, vbat);
 	if (ret < 0) {
 		LOG_ERR("failed to get gauge voltage channel (%d)", ret);
 		return ret;
 	}
 
-	/* STEP 3.3 - Get the SENSOR_CHAN_VOLTAGE channel result into vout */
+	/* STEP 4.2.3 - Get the SENSOR_CHAN_VOLTAGE channel result into vout */
 	ret = sensor_channel_get(npm2100_adc, SENSOR_CHAN_VOLTAGE, vout);
 	if (ret < 0) {
 		LOG_ERR("failed to get voltage channel (%d)", ret);
@@ -149,11 +149,11 @@ int main(void) {
 
 	k_work_init(&shphld_work, shphld_handler);
 
-	/* STEP 2.1 - Initialize the npm2100 callback  */
+	/* STEP 4.1.1 - Initialize the npm2100 callback  */
 	gpio_init_callback(&shphld_cb, events_handler, BIT(NPM2100_EVENT_SYS_SHIPHOLD_FALL) |
 							BIT(NPM2100_EVENT_SYS_SHIPHOLD_RISE));
 
-	/* STEP 2.2 - Add the npm2100 callback `shphld_cb` to the mfd driver. */
+	/* STEP 4.1.2 - Add the npm2100 callback `shphld_cb` to the mfd driver. */
 	ret = mfd_npm2100_add_callback(npm2100, &shphld_cb);
 	if (ret < 0) {
 		LOG_ERR("failed to add a callback (%d)", ret);

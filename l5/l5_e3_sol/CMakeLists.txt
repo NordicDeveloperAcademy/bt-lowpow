@@ -4,4 +4,5 @@ find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 
 project(bt-lowpower)
 
-target_sources(app PRIVATE main.c timer.c pattern.c pwm.c)
+target_include_directories(app PRIVATE inc src)
+target_sources(app PRIVATE src/main.c src/pattern.c src/pwm.c src/timer.c)

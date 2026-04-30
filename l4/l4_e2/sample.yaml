@@ -1,5 +1,5 @@
 sample:
-  description: Designing Low Power Bluetooth LE devices Lesson 4 Exercise 2 - Peripherals
+  description: Designing Low Power Bluetooth LE devices Lesson 4 Exercise 2
   name: Low Power Bluetooth LE devices - Lesson 4 Exercise 2 
 
 common: 
@@ -15,6 +15,7 @@ common:
       - nrf54lm20dk/nrf54lm20b/cpuapp
       - nrf54ls05dk/nrf54ls05a/cpuapp
       - nrf54ls05dk/nrf54ls05b/cpuapp
+      - nrf54lv10dk/nrf54lv10a/cpuapp
     platform_allow:
       - nrf54l15dk/nrf54l15/cpuapp
       - nrf54l15dk/nrf54l10/cpuapp
@@ -23,6 +24,7 @@ common:
       - nrf54lm20dk/nrf54lm20b/cpuapp
       - nrf54ls05dk/nrf54ls05a/cpuapp
       - nrf54ls05dk/nrf54ls05b/cpuapp
+      - nrf54lv10dk/nrf54lv10a/cpuapp
 
 tests:
   l4.e2: {} 

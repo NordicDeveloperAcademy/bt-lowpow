@@ -1,0 +1,17 @@
+sample:
+  name: Lesson 2 Exercise 1 - PMIC
+
+tests:
+  sample.l2_e1:
+    platform_allow:
+      - nrf54l15dk/nrf54l15/cpuapp
+      - nrf54l15dk/nrf54l10/cpuapp
+      - nrf54l15dk/nrf54l05/cpuapp
+      - nrf54lm20dk/nrf54lm20a/cpuapp
+      - nrf54lm20dk/nrf54lm20b/cpuapp
+      - nrf54ls05dk/nrf54ls05b/cpuapp
+    sysbuild: true
+    skip: true
+    build_only: true
+    extra_args: 
+      - EXTRA_DTC_OVERLAY_FILE="npm2100_pmic.overlay;pmic_gpios.overlay"

@@ -1,0 +1,21 @@
+source "Kconfig.zephyr"
+
+menu "Lesson 6 Exercise 2 config"
+
+config USE_PPI_WORKFLOW
+    bool "Use PPI workflow"
+    default n 
+
+config GPIO_EVENT_PERIOD_US
+    int "GPIO event period in microseconds"
+    default 500
+
+config GPIO_EVENTS_CNT
+    int "Number of GPIO events in one cycle"
+    default 6
+
+config PWM_OUTPUT_PERIOD_US
+    int "PWM output period in microseconds"
+    default 5000
+
+endmenu

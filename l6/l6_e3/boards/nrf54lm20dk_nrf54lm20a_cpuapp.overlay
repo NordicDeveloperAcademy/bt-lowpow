@@ -1,0 +1,7 @@
+&timer20 {
+    status = "okay";
+};
+
+&pwm20 {
+    status = "okay";
+};

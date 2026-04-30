@@ -1,24 +1,25 @@
+#
+# Copyright (c) 2018 Nordic Semiconductor
+#
+# SPDX-License-Identifier: LicenseRef-Nordic-5-Clause
+#
+
 source "Kconfig.zephyr"
 
-menu "Lesson 5 Exercise 3 config"
+menu "Nordic LED-Button BLE GATT service sample"
 
-
-choice GPIO_PATTERN
-    bool "GPIO pattern choice"
-    default PATTERN_DISABLED
-
-config PATTERN_DISABLED
-    bool "NO_PATTERN"
-
-config PATTERN_TIMER_W_CPU
-    bool "Pattern timer with CPU workflow"
-
-config PATTERN_PWM_SIMPLE
-    bool "Pattern PWM with CPU workflow"
-
-config PATTERN_PWM_COMPLEX
-    bool "Pattern PWM with DMA workflow"
-
-endchoice
+config BT_LBS_SECURITY_ENABLED
+	bool "Enable security"
+	default y
+	select BT_SMP
+	select BT_SETTINGS
+	select FLASH
+	select FLASH_PAGE_LAYOUT
+	select FLASH_MAP
+	select ZMS if (SOC_FLASH_NRF_RRAM || SOC_FLASH_NRF_MRAM)
+	select NVS if !(SOC_FLASH_NRF_RRAM || SOC_FLASH_NRF_MRAM)
+	select SETTINGS
+	help
+	  "Enable BLE security for the LED-Button service"
 
 endmenu

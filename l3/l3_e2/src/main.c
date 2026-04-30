@@ -1,216 +1,25 @@
-/*
- * Copyright (c) 2018 Nordic Semiconductor ASA
- *
- * SPDX-License-Identifier: LicenseRef-Nordic-5-Clause
- */
-
-/** @file
- *  @brief Nordic UART Bridge Service (NUS) sample
- */
-#include <zephyr/types.h>
-#include <zephyr/kernel.h>
-#include <zephyr/settings/settings.h>
-
-#include <soc.h>
-#include <stdio.h>
-#include <string.h>
-
+/* STEP 1.2 - Add advertising parameters, enable the Bluetooth stack and start advertising */
 #include <zephyr/bluetooth/bluetooth.h>
-#include <zephyr/bluetooth/uuid.h>
-#include <zephyr/bluetooth/gatt.h>
-#include <zephyr/bluetooth/hci.h>
 
-#include <bluetooth/services/nus.h>
+#define DEVICE_NAME "power" 
+/* STEP 2.2 - Set the advertising interval to 100 ms */
+//#define ADV_INTERVAL_MS 1000
+#define ADV_INTERVAL_MS 100
 
-#define STACKSIZE CONFIG_BT_NUS_THREAD_STACK_SIZE
-#define PRIORITY 7
+const struct bt_le_adv_param *adv_params =
+	BT_LE_ADV_PARAM(
+		BT_LE_ADV_OPT_NONE,
+		BT_GAP_MS_TO_ADV_INTERVAL(ADV_INTERVAL_MS),
+		BT_GAP_MS_TO_ADV_INTERVAL(ADV_INTERVAL_MS),
+		NULL);
 
-#define DEVICE_NAME CONFIG_BT_DEVICE_NAME
-#define DEVICE_NAME_LEN (sizeof(DEVICE_NAME) - 1)
-
-#define BT_LE_ADV_CONN BT_LE_ADV_PARAM(BT_LE_ADV_OPT_CONN, BT_GAP_ADV_SLOW_INT_MIN, BT_GAP_ADV_SLOW_INT_MAX, NULL)
-
-#define LOOP_PERIOD_MS      900
-
-static K_SEM_DEFINE(ble_init_ok, 0, 1);
-
-/* STEP 9.3 Define timer and expiry function */
-
-
-static struct bt_conn *current_conn;
-static struct bt_conn *auth_conn;
-static struct k_work adv_work;
-
-struct uart_data_t {
- void *fifo_reserved;
- uint8_t data[CONFIG_BT_NUS_UART_BUFFER_SIZE];
- uint16_t len;
+const struct bt_data ad[] = {
+	BT_DATA_BYTES(BT_DATA_FLAGS, (BT_LE_AD_GENERAL | BT_LE_AD_NO_BREDR)),
+	BT_DATA(BT_DATA_NAME_COMPLETE, DEVICE_NAME, sizeof(DEVICE_NAME)),
 };
-
-static K_FIFO_DEFINE(fifo_uart_tx_data);
-static K_FIFO_DEFINE(fifo_uart_rx_data);
-
-static const struct bt_data ad[] = {
- BT_DATA_BYTES(BT_DATA_FLAGS, (BT_LE_AD_GENERAL | BT_LE_AD_NO_BREDR)),
- BT_DATA(BT_DATA_NAME_COMPLETE, DEVICE_NAME, DEVICE_NAME_LEN),
-};
-
-static const struct bt_data sd[] = {
- BT_DATA_BYTES(BT_DATA_UUID128_ALL, BT_UUID_NUS_VAL),
-};
-
-/* STEP 7.3.1 - Create the variable that holds the callback for MTU negotiation */
-
-
-int i = 0;
-
-/* STEP 9.1 - Define a large data packet */
-
-
-static void adv_work_handler(struct k_work *work)
-{
- int err = bt_le_adv_start(BT_LE_ADV_CONN, ad, ARRAY_SIZE(ad), sd, ARRAY_SIZE(sd));
-
- if (err) {
-  return;
- }
-
-}
-
-static void advertising_start(void)
-{
- k_work_submit(&adv_work);
-}
-
-/* STEP 7.3.2 - Request an MTU exchange */
-
-
-/* STEP 7.2 - Request a data length update */
-
-
-static void request_phy_update(struct bt_conn *conn)
-{
-    int err;
-    const struct bt_conn_le_phy_param preferred_phy = {
-        .options = BT_CONN_LE_PHY_OPT_NONE,
-        /* STEP 15 - Set the preferred PHY to 2M */
-        .pref_rx_phy = BT_GAP_LE_PHY_1M,
-        .pref_tx_phy = BT_GAP_LE_PHY_1M,
-    };
-    err = bt_conn_le_phy_update(conn, &preferred_phy);
-    if (err) {
-    }
-}
-
-
-static void connected(struct bt_conn *conn, uint8_t err)
-{
- char addr[BT_ADDR_LE_STR_LEN];
-
- if (err) {
-  return;
- }
-
- bt_addr_le_to_str(bt_conn_get_dst(conn), addr, sizeof(addr));
-
- current_conn = bt_conn_ref(conn);
-
-struct bt_conn_info info;
-err = bt_conn_get_info(conn, &info);
-if (err) {
-	return;
-}
-
- request_phy_update(current_conn);
-
- /* STEP 8 - Request an MTU exchange */
- 
-
- /* STEP 12 - Request a data length update */
- 
-
-}
-
-static void disconnected(struct bt_conn *conn, uint8_t reason)
-{
- char addr[BT_ADDR_LE_STR_LEN];
-
- bt_addr_le_to_str(bt_conn_get_dst(conn), addr, sizeof(addr));
-
- if (auth_conn) {
-  bt_conn_unref(auth_conn);
-  auth_conn = NULL;
- }
-
- if (current_conn) {
-  bt_conn_unref(current_conn);
-  current_conn = NULL;
- }
-}
-
-static void recycled_cb(void)
-{
- advertising_start();
-}
-
-BT_CONN_CB_DEFINE(conn_callbacks) = {
- .connected              = connected,
- .disconnected           = disconnected,
- .recycled               = recycled_cb,
-};
-
-static void bt_receive_cb(struct bt_conn *conn, const uint8_t *const data,
-     uint16_t len)
-{
- char addr[BT_ADDR_LE_STR_LEN] = {0};
-
- bt_addr_le_to_str(bt_conn_get_dst(conn), addr, ARRAY_SIZE(addr));
-
-}
-
-static void bt_notif_enabled_cb(enum bt_nus_send_status status)
-{
-    /* STEP 9.4 - Start the timer only when notifications are enabled */
-
-};
-
-static struct bt_nus_cb nus_cb = {
- .received = bt_receive_cb,
- .send_enabled = bt_notif_enabled_cb,
-};
-
-void error(void)
-{
- while (true) {
-  /* Spin for ever */
-  k_sleep(K_MSEC(1000));
- }
-}
-
-/* STEP 9.2 - Send a large packet over NUS */
-
-
 int main(void)
 {
- int err = 0;
-
- err = bt_enable(NULL);
- if (err) {
-  error();
- }
-
- k_sem_give(&ble_init_ok);
-
- if (IS_ENABLED(CONFIG_SETTINGS)) {
-  settings_load();
- }
-
- err = bt_nus_init(&nus_cb);
- if (err) {
-  return 0;
- }
-
- k_work_init(&adv_work, adv_work_handler);
- advertising_start();
-
+	bt_enable(NULL);
+	bt_le_adv_start(adv_params, ad, ARRAY_SIZE(ad), NULL, 0);
+	return 0;
 }

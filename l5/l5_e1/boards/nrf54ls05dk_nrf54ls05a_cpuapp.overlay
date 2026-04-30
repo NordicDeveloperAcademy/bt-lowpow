@@ -1,4 +1,3 @@
-&gpio1 {
-   /* STEP 6 - Disable the GPIOTE IN event on pin 13 (button 0) */
- //sense-edge-mask = <(1 << 13)>;
+&uart20 {
+    status = "disabled";
 };

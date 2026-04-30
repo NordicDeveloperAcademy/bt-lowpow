@@ -1,25 +1,30 @@
 sample:
-  description: Designing Low Power Bluetooth LE devices Lesson 5 Exercise 2 - DPPI
+  description: Designing Low Power Bluetooth LE devices Lesson 5 Exercise 2 - Peripherals
   name: Low Power Bluetooth LE devices - Lesson 5 Exercise 2 
 
 common: 
     sysbuild: true
     build_only: true
+    sysbuild: true
+
     integration_platforms:
       - nrf54l15dk/nrf54l15/cpuapp
+      - nrf54l15dk/nrf54l10/cpuapp
+      - nrf54l15dk/nrf54l05/cpuapp
       - nrf54lm20dk/nrf54lm20a/cpuapp
       - nrf54lm20dk/nrf54lm20b/cpuapp
       - nrf54ls05dk/nrf54ls05a/cpuapp
       - nrf54ls05dk/nrf54ls05b/cpuapp
-
     platform_allow:
       - nrf54l15dk/nrf54l15/cpuapp
+      - nrf54l15dk/nrf54l10/cpuapp
+      - nrf54l15dk/nrf54l05/cpuapp
       - nrf54lm20dk/nrf54lm20a/cpuapp
       - nrf54lm20dk/nrf54lm20b/cpuapp
       - nrf54ls05dk/nrf54ls05a/cpuapp
       - nrf54ls05dk/nrf54ls05b/cpuapp
 
-
 tests:
-  l5.e2_sol: {} 
+  l5.e2.sol: {} 
   
+

@@ -1,7 +1,7 @@
-&timer20 {
-    status = "okay";
+&uart20 {
+    status = "disabled";
 };
 
-&pwm20 {
-    status = "okay";
+&uart30 {
+    status = "disabled";
 };

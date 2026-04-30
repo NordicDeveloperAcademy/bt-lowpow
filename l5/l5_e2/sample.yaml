@@ -1,5 +1,5 @@
 sample:
-  description: Designing Low Power Bluetooth LE devices Lesson 5 Exercise 2 - DPPI
+  description: Designing Low Power Bluetooth LE devices Lesson 5 Exercise 2 - Peripherals
   name: Low Power Bluetooth LE devices - Lesson 5 Exercise 2 
 
 common: 
@@ -25,5 +25,6 @@ common:
       - nrf54ls05dk/nrf54ls05b/cpuapp
 
 tests:
-  l5.e2: {}
+  l5.e2: {} 
   
+

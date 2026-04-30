@@ -4,177 +4,213 @@
  * SPDX-License-Identifier: LicenseRef-Nordic-5-Clause
  */
 
+/** @file
+ *  @brief Nordic UART Bridge Service (NUS) sample
+ */
 #include <zephyr/types.h>
-#include <stddef.h>
-#include <string.h>
-#include <errno.h>
-#include <zephyr/sys/printk.h>
-#include <zephyr/sys/byteorder.h>
 #include <zephyr/kernel.h>
+#include <zephyr/settings/settings.h>
 
-#include <zephyr/device.h>
-#include <zephyr/drivers/gpio.h>
 #include <soc.h>
+#include <stdio.h>
+#include <string.h>
 
 #include <zephyr/bluetooth/bluetooth.h>
-#include <zephyr/bluetooth/hci.h>
-#include <zephyr/bluetooth/conn.h>
 #include <zephyr/bluetooth/uuid.h>
 #include <zephyr/bluetooth/gatt.h>
+#include <zephyr/bluetooth/hci.h>
 
-#include <bluetooth/services/lbs.h>
-#include <zephyr/settings/settings.h>
-#include <helpers.h>
+#include <bluetooth/services/nus.h>
+
+#define STACKSIZE CONFIG_BT_NUS_THREAD_STACK_SIZE
+#define PRIORITY 7
+
+#define DEVICE_NAME CONFIG_BT_DEVICE_NAME
+#define DEVICE_NAME_LEN (sizeof(DEVICE_NAME) - 1)
+
+#define BT_LE_ADV_CONN BT_LE_ADV_PARAM(BT_LE_ADV_OPT_CONN, BT_GAP_ADV_SLOW_INT_MIN, BT_GAP_ADV_SLOW_INT_MAX, NULL)
+
+#define LOOP_PERIOD_MS      900
+
+static K_SEM_DEFINE(ble_init_ok, 0, 1);
+
+/* STEP 9.3 Define timer and expiry function */
 
 
-#define DEVICE_NAME             CONFIG_BT_DEVICE_NAME
-#define DEVICE_NAME_LEN         (sizeof(DEVICE_NAME) - 1)
-
-#define RANDOM_BYTES_COUNT      16
-
-#define RUN_STATUS_LED          DK_LED1
-#define CON_STATUS_LED          DK_LED2
-#define RUN_LED_BLINK_INTERVAL  1000
-
-#define USER_LED                DK_LED3
-
-#define USER_BUTTON             DK_BTN1_MSK
-
-#define BT_LE_ADV_CONN_1000                                                                      \
-    BT_LE_ADV_PARAM(BT_LE_ADV_OPT_CONN, BT_GAP_ADV_SLOW_INT_MIN, BT_GAP_ADV_SLOW_INT_MIN,  \
-            NULL)
-
-static bool app_button_state;
+static struct bt_conn *current_conn;
+static struct bt_conn *auth_conn;
 static struct k_work adv_work;
 
+struct uart_data_t {
+ void *fifo_reserved;
+ uint8_t data[CONFIG_BT_NUS_UART_BUFFER_SIZE];
+ uint16_t len;
+};
+
+static K_FIFO_DEFINE(fifo_uart_tx_data);
+static K_FIFO_DEFINE(fifo_uart_rx_data);
+
 static const struct bt_data ad[] = {
-    BT_DATA_BYTES(BT_DATA_FLAGS, (BT_LE_AD_GENERAL | BT_LE_AD_NO_BREDR)),
-    BT_DATA(BT_DATA_NAME_COMPLETE, DEVICE_NAME, DEVICE_NAME_LEN),
+ BT_DATA_BYTES(BT_DATA_FLAGS, (BT_LE_AD_GENERAL | BT_LE_AD_NO_BREDR)),
+ BT_DATA(BT_DATA_NAME_COMPLETE, DEVICE_NAME, DEVICE_NAME_LEN),
 };
 
 static const struct bt_data sd[] = {
-    BT_DATA_BYTES(BT_DATA_UUID128_ALL, BT_UUID_LBS_VAL),
+ BT_DATA_BYTES(BT_DATA_UUID128_ALL, BT_UUID_NUS_VAL),
 };
+
+/* STEP 7.3.1 - Create the variable that holds the callback for MTU negotiation */
+
+
+int i = 0;
+
+/* STEP 9.1 - Define a large data packet */
+
 
 static void adv_work_handler(struct k_work *work)
 {
-    int err = bt_le_adv_start(BT_LE_ADV_CONN_1000, ad, ARRAY_SIZE(ad), sd, ARRAY_SIZE(sd));
+ int err = bt_le_adv_start(BT_LE_ADV_CONN, ad, ARRAY_SIZE(ad), sd, ARRAY_SIZE(sd));
 
-    if (err) {
-        printk("Advertising failed to start (err %d)\n", err);
-        return;
-    }
+ if (err) {
+  return;
+ }
 
-    printk("Advertising successfully started\n");
 }
 
 static void advertising_start(void)
 {
-    k_work_submit(&adv_work);
+ k_work_submit(&adv_work);
 }
+
+/* STEP 7.3.2 - Request an MTU exchange */
+
+
+/* STEP 7.2 - Request a data length update */
+
+
+static void request_phy_update(struct bt_conn *conn)
+{
+    int err;
+    const struct bt_conn_le_phy_param preferred_phy = {
+        .options = BT_CONN_LE_PHY_OPT_NONE,
+        /* STEP 15 - Set the preferred PHY to 2M */
+        .pref_rx_phy = BT_GAP_LE_PHY_1M,
+        .pref_tx_phy = BT_GAP_LE_PHY_1M,
+    };
+    err = bt_conn_le_phy_update(conn, &preferred_phy);
+    if (err) {
+    }
+}
+
 
 static void connected(struct bt_conn *conn, uint8_t err)
 {
-    if (err) {
-        printk("Connection failed, err 0x%02x %s\n", err, bt_hci_err_to_str(err));
-        return;
-    }
+ char addr[BT_ADDR_LE_STR_LEN];
 
-    printk("Connected\n");
+ if (err) {
+  return;
+ }
+
+ bt_addr_le_to_str(bt_conn_get_dst(conn), addr, sizeof(addr));
+
+ current_conn = bt_conn_ref(conn);
+
+struct bt_conn_info info;
+err = bt_conn_get_info(conn, &info);
+if (err) {
+	return;
+}
+
+ request_phy_update(current_conn);
+
+ /* STEP 8 - Request an MTU exchange */
+ 
+
+ /* STEP 12 - Request a data length update */
+ 
+
 }
 
 static void disconnected(struct bt_conn *conn, uint8_t reason)
 {
-    printk("Disconnected, reason 0x%02x %s\n", reason, bt_hci_err_to_str(reason));
-}
+ char addr[BT_ADDR_LE_STR_LEN];
 
+ bt_addr_le_to_str(bt_conn_get_dst(conn), addr, sizeof(addr));
+
+ if (auth_conn) {
+  bt_conn_unref(auth_conn);
+  auth_conn = NULL;
+ }
+
+ if (current_conn) {
+  bt_conn_unref(current_conn);
+  current_conn = NULL;
+ }
+}
 
 static void recycled_cb(void)
 {
-    printk("Connection object available from previous conn. Disconnect is complete!\n");
-    advertising_start();
+ advertising_start();
 }
 
 BT_CONN_CB_DEFINE(conn_callbacks) = {
-    .connected        = connected,
-    .disconnected     = disconnected,
-    .recycled         = recycled_cb,
+ .connected              = connected,
+ .disconnected           = disconnected,
+ .recycled               = recycled_cb,
 };
 
-static void app_led_cb(bool led_state)
+static void bt_receive_cb(struct bt_conn *conn, const uint8_t *const data,
+     uint16_t len)
 {
-    (void) led_state;
+ char addr[BT_ADDR_LE_STR_LEN] = {0};
+
+ bt_addr_le_to_str(bt_conn_get_dst(conn), addr, ARRAY_SIZE(addr));
+
 }
 
-static bool app_button_cb(void)
+static void bt_notif_enabled_cb(enum bt_nus_send_status status)
 {
-    return app_button_state;
-}
+    /* STEP 9.4 - Start the timer only when notifications are enabled */
 
-static struct bt_lbs_cb lbs_callbacs = {
-    .led_cb    = app_led_cb,
-    .button_cb = app_button_cb,
 };
+
+static struct bt_nus_cb nus_cb = {
+ .received = bt_receive_cb,
+ .send_enabled = bt_notif_enabled_cb,
+};
+
+void error(void)
+{
+ while (true) {
+  /* Spin for ever */
+  k_sleep(K_MSEC(1000));
+ }
+}
+
+/* STEP 9.2 - Send a large packet over NUS */
 
 
 int main(void)
 {
-    int err;
+ int err = 0;
 
-    printk("Starting Bluetooth Peripheral LBS sample\n");
+ err = bt_enable(NULL);
+ if (err) {
+  error();
+ }
 
-    err = bt_enable(NULL);
-    if (err) {
-        printk("Bluetooth init failed (err %d)\n", err);
-        return 0;
-    }
+ k_sem_give(&ble_init_ok);
 
-    printk("Bluetooth initialized\n");
+ if (IS_ENABLED(CONFIG_SETTINGS)) {
+  settings_load();
+ }
 
-    err = bt_lbs_init(&lbs_callbacs);
-    if (err) {
-        printk("Failed to init LBS (err:%d)\n", err);
-        return 0;
-    }
+ err = bt_nus_init(&nus_cb);
+ if (err) {
+  return 0;
+ }
 
-    k_work_init(&adv_work, adv_work_handler);
-    advertising_start();
+ k_work_init(&adv_work, adv_work_handler);
+ advertising_start();
 
-    #if CONFIG_WATCHDOG
-        if( init_watchdog() <0) {
-            printk("Failed to initialize watchdog \n");
-            return 0;
-        }
-    #endif
-
-    #if defined(CONFIG_NRFX_TIMER00_1MHz)
-        enable_timer00(TIMER_1MHZ);
-    #endif
-
-    #if defined(CONFIG_NRFX_TIMER00_128MHz)
-        enable_timer00(TIMER_128MHZ);
-    #endif
-
-    #if defined(CONFIG_NRFX_TIMER20_1MHz)
-        enable_timer20(TIMER_1MHZ);
-    #endif
-
-    #if defined(CONFIG_NRFX_PWM_GRTC)   
-        set_grtc_pwm(CONFIG_PWM_DUTY_CYCLE);   
-    #endif    
-
-    #if defined(CONFIG_PWM) 
-    if ( set_pwm_out(CONFIG_PWM_DUTY_CYCLE ) < 0) {
-        printk("Failed to set PWM output \n");
-        return 0;
-    }
-    #endif
-
-    while (1) 
-    {
-        #if defined(CONFIG_WATCHDOG)
-           watchdog_feed();
-        #endif
-            k_sleep(K_MSEC(1000));
-    }
 }

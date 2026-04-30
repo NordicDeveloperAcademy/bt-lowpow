@@ -1,0 +1,44 @@
+
+/ { pwm_node: pwm_node{
+        compatible = "pwm-leds";
+        pwm_out0: pwm_out0 {
+            pwms = <&pwm21 0 PWM_USEC(7812) PWM_POLARITY_NORMAL>;
+        };
+    };
+};
+
+&wdt31 {
+    status = "okay";
+};
+
+&timer00 {
+    status = "okay";
+};
+
+&timer20 {
+    status = "okay";
+};
+
+
+&pwm21 {
+    status = "okay";
+    pinctrl-0 = <&pwm_out_default>;
+    pinctrl-1 = <&pwm_out_sleep>;
+    pinctrl-names = "default", "sleep";
+};
+
+&pinctrl {
+    pwm_out_default: pwm_out_default {
+        group1 {
+            psels = <NRF_PSEL(PWM_OUT0, 1, 25)>;
+            nordic,invert;
+        };
+    };
+
+    pwm_out_sleep: pwm_out_sleep {
+        group1 {
+            psels = <NRF_PSEL(PWM_OUT0, 1, 25)>;
+            nordic,invert;
+        };
+    };
+};

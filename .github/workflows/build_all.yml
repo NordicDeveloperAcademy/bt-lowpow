@@ -9,5 +9,5 @@ jobs:
   call-workflow:
     uses: lubiel-nordic/workflows/.github/workflows/build_all.yml@main
     with:
-      repo_name: "bt-lowpo"
+      repo_name: "bt-lowpow"
       toolchain: "latest"

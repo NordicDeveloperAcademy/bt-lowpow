@@ -35,9 +35,9 @@ static const struct bt_data ad[] = {
 };
 
 /* STEP 7.1 - Define the minimal advertising packet */
-static const struct bt_data ad_min[] = {
+/*static const struct bt_data ad_min[] = {
 	BT_DATA_BYTES(BT_DATA_FLAGS, BT_LE_AD_NO_BREDR),
-};
+};*/
 
 /* STEP 8.2 - Define variable to keep track of advertising types */
 enum adv_type {

@@ -113,76 +113,134 @@ void gpio_input(const struct device *dev, struct gpio_callback *cb, uint32_t pin
     pattern_execute();
 }
 
-static int gpio_input_init(bool use_ppi)
+
+static int gpiote_input_init()
+{
+    uint8_t in_channel;    
+    int status = nrfx_gpiote_channel_alloc(&input_gpiote_inst, &in_channel);
+    NRFX_ASSERT(status == 0);
+
+    static const nrf_gpio_pin_pull_t pull_config = NRF_GPIO_PIN_NOPULL;
+    nrfx_gpiote_trigger_config_t trigger_config = {
+    .trigger = NRFX_GPIOTE_TRIGGER_HITOLO,
+    .p_in_channel = &in_channel,
+    };
+
+    static const nrfx_gpiote_handler_config_t handler_config = {
+    .handler = NULL,
+    };
+    nrfx_gpiote_input_pin_config_t input_config = {
+    .p_pull_config = &pull_config,
+    .p_trigger_config = &trigger_config,
+    .p_handler_config = &handler_config
+    };
+
+    status = nrfx_gpiote_input_configure(&input_gpiote_inst, INPUT_PIN, &input_config);
+    NRFX_ASSERT(status == 0);
+
+    nrfx_gpiote_trigger_enable(&input_gpiote_inst, INPUT_PIN, false);
+
+    return status;
+}
+
+static int gpiote_input_dppi_connect()
+{
+    nrfx_gppi_handle_t input_h;    
+    int status = nrfx_gppi_conn_alloc(nrfx_gpiote_in_event_address_get(&input_gpiote_inst, INPUT_PIN),
+                nrfx_timer_task_address_get(&pattern_timer, NRF_TIMER_TASK_START), 
+                &input_h);
+    NRFX_ASSERT(status == 0);
+
+    status = nrfx_gppi_ep_attach(nrfx_timer_task_address_get(&pattern_stop_timer, NRF_TIMER_TASK_START), input_h);
+    NRFX_ASSERT(status == 0);
+
+    nrfx_gppi_conn_enable(input_h);
+    return status;
+}
+
+static int gpio_input_init()
+{
+    int ret = gpio_pin_configure_dt(&gpio_input_dt, GPIO_INPUT);
+    if (ret != 0) {
+        printk("Error %d: failed to configure %s pin %d\n", ret, gpio_input_dt.port->name, gpio_input_dt.pin);
+        return ret;
+    }
+
+    ret = gpio_pin_interrupt_configure_dt(&gpio_input_dt, GPIO_INT_EDGE_TO_ACTIVE);
+    if (ret != 0) {
+        printk("Error %d: failed to configure interrupt on %s pin %d\n", ret, gpio_input_dt.port->name, gpio_input_dt.pin);
+        return ret;
+    }
+
+    gpio_init_callback(&gpio_input_cb, gpio_input, BIT(gpio_input_dt.pin));
+    gpio_add_callback(gpio_input_dt.port, &gpio_input_cb);
+
+    return ret;
+}
+
+static int pattern_input_init(bool use_ppi)
 {
     int status;
-    uint8_t in_channel;
-    nrfx_gppi_handle_t input_h;
 
     if(use_ppi)
     {
-        status = nrfx_gpiote_channel_alloc(&input_gpiote_inst, &in_channel);
+        status = gpiote_input_init();
         NRFX_ASSERT(status == 0);
-
-        static const nrf_gpio_pin_pull_t pull_config = NRF_GPIO_PIN_NOPULL;
-        nrfx_gpiote_trigger_config_t trigger_config = {
-        .trigger = NRFX_GPIOTE_TRIGGER_HITOLO,
-        .p_in_channel = &in_channel,
-        };
-
-        static const nrfx_gpiote_handler_config_t handler_config = {
-        .handler = NULL,
-        };
-        nrfx_gpiote_input_pin_config_t input_config = {
-        .p_pull_config = &pull_config,
-        .p_trigger_config = &trigger_config,
-        .p_handler_config = &handler_config
-        };
-        status = nrfx_gpiote_input_configure(&input_gpiote_inst, INPUT_PIN, &input_config);
+        
+        status = gpiote_input_dppi_connect();
         NRFX_ASSERT(status == 0);
-
-        nrfx_gpiote_trigger_enable(&input_gpiote_inst, INPUT_PIN, false);
-
-        status = nrfx_gppi_conn_alloc(nrfx_gpiote_in_event_address_get(&input_gpiote_inst, INPUT_PIN),
-                    nrfx_timer_task_address_get(&pattern_timer, NRF_TIMER_TASK_START), 
-                    &input_h);
+    }
+    else
+    {
+        status = gpio_input_init();
         NRFX_ASSERT(status == 0);
-
-        status = nrfx_gppi_ep_attach(nrfx_timer_task_address_get(&pattern_stop_timer, NRF_TIMER_TASK_START), input_h);
-        NRFX_ASSERT(status == 0);
-
-        nrfx_gppi_conn_enable(input_h);
-        return status;
     }
 
-    int ret = gpio_pin_configure_dt(&gpio_input_dt, GPIO_INPUT);
-	if (ret != 0) {
-		printk("Error %d: failed to configure %s pin %d\n", ret, gpio_input_dt.port->name, gpio_input_dt.pin);
-		return ret;
-	}
-
-	ret = gpio_pin_interrupt_configure_dt(&gpio_input_dt, GPIO_INT_EDGE_TO_ACTIVE);
-	if (ret != 0) {
-		printk("Error %d: failed to configure interrupt on %s pin %d\n", ret, gpio_input_dt.port->name, gpio_input_dt.pin);
-		return ret;
-	}
-
-	gpio_init_callback(&gpio_input_cb, gpio_input, BIT(gpio_input_dt.pin));
-	gpio_add_callback(gpio_input_dt.port, &gpio_input_cb);
-
-    return 0;
+    return status;
 }
 
-static int timer_workflow_init(bool use_ppi)
+static int gpiote_outout_dppi_connect()
+{
+    nrfx_gppi_handle_t  gppi_h, timer2_h;
+    int status = nrfx_gppi_conn_alloc(
+        nrfx_timer_compare_event_address_get(&pattern_timer, NRF_TIMER_CC_CHANNEL0),
+        nrfx_gpiote_out_task_address_get(&input_gpiote_inst, GPPI_OUTPUT_PIN_PRIMARY),
+    &gppi_h);
+
+    NRFX_ASSERT(status == 0);
+
+    nrfx_gppi_conn_enable(gppi_h);
+
+    status = nrfx_gppi_conn_alloc(
+    nrfx_timer_compare_event_address_get(&pattern_stop_timer, NRF_TIMER_CC_CHANNEL0),
+    nrfx_timer_task_address_get(&pattern_timer, NRF_TIMER_TASK_STOP), 
+    &timer2_h);
+
+    NRFX_ASSERT(status == 0);
+
+    status = nrfx_gppi_ep_attach(nrfx_timer_task_address_get(&pattern_stop_timer, NRF_TIMER_TASK_STOP), timer2_h);
+    NRFX_ASSERT(status == 0);
+
+    nrfx_gppi_conn_enable(timer2_h);
+    return status;
+}
+
+static int pattern_timer_workflow_init(bool use_ppi)
 {
     int status;
-    nrfx_gppi_handle_t  gppi_h, timer2_h;
-
-
     uint32_t base_frequency = NRF_TIMER_BASE_FREQUENCY_GET(pattern_timer.p_reg);
     nrfx_timer_config_t timer_config = NRFX_TIMER_DEFAULT_CONFIG(base_frequency);
     timer_config.bit_width = NRF_TIMER_BIT_WIDTH_32;
     timer_config.p_context = "Some context";
+
+    if(!use_ppi)
+    {
+        IRQ_CONNECT(NRFX_IRQ_NUMBER_GET(NRF_TIMER_INST_GET(PATTERN_TIMER_INST_IDX)), IRQ_PRIO_LOWEST,
+                    nrfx_timer_irq_handler, &pattern_timer, PATTERN_TIMER_INST_IDX);
+        IRQ_CONNECT(NRFX_IRQ_NUMBER_GET(NRF_TIMER_INST_GET(PATTERN_STOP_TIMER_INST_IDX)), IRQ_PRIO_LOWEST,
+                    nrfx_timer_irq_handler, &pattern_stop_timer, PATTERN_STOP_TIMER_INST_IDX);
+    }
+
 
     status = nrfx_timer_init(&pattern_timer, &timer_config,  use_ppi ? NULL : pattern_timer_handler);
     NRFX_ASSERT(status == 0);
@@ -192,7 +250,6 @@ static int timer_workflow_init(bool use_ppi)
     NRFX_ASSERT(status == 0);
 
   
-
     uint32_t desired_ticks = nrfx_timer_us_to_ticks(&pattern_timer, CONFIG_GPIO_EVENT_PERIOD_US);
 
     nrfx_timer_extended_compare(&pattern_timer, NRF_TIMER_CC_CHANNEL0, desired_ticks,
@@ -209,78 +266,45 @@ static int timer_workflow_init(bool use_ppi)
     nrfx_timer_enable(&pattern_timer);
     nrfx_timer_enable(&pattern_stop_timer);
     nrfx_timer_pause(&pattern_timer);
-    nrfx_timer_pause(&pattern_stop_timer); 
+    nrfx_timer_pause(&pattern_stop_timer);
 
-
-    if(use_ppi)
-    {
-        status = nrfx_gppi_conn_alloc(
-            nrfx_timer_compare_event_address_get(&pattern_timer, NRF_TIMER_CC_CHANNEL0),
-            nrfx_gpiote_out_task_address_get(&input_gpiote_inst, GPPI_OUTPUT_PIN_PRIMARY),
-        &gppi_h);
-        NRFX_ASSERT(status == 0);
-
-        nrfx_gppi_conn_enable(gppi_h);
-
-        status = nrfx_gppi_conn_alloc(
-        nrfx_timer_compare_event_address_get(&pattern_stop_timer, NRF_TIMER_CC_CHANNEL0),
-        nrfx_timer_task_address_get(&pattern_timer, NRF_TIMER_TASK_STOP), 
-        &timer2_h);
-        NRFX_ASSERT(status == 0);
-
-        status = nrfx_gppi_ep_attach(nrfx_timer_task_address_get(&pattern_stop_timer, NRF_TIMER_TASK_STOP), timer2_h);
-        NRFX_ASSERT(status == 0);
-
-        nrfx_gppi_conn_enable(timer2_h);
-        return status;
-
-    }
-
-    IRQ_CONNECT(NRFX_IRQ_NUMBER_GET(NRF_TIMER_INST_GET(PATTERN_TIMER_INST_IDX)), IRQ_PRIO_LOWEST,
-                nrfx_timer_irq_handler, &pattern_timer, PATTERN_TIMER_INST_IDX);
-    IRQ_CONNECT(NRFX_IRQ_NUMBER_GET(NRF_TIMER_INST_GET(PATTERN_STOP_TIMER_INST_IDX)), IRQ_PRIO_LOWEST,
-            nrfx_timer_irq_handler, &pattern_stop_timer, PATTERN_STOP_TIMER_INST_IDX);
-   
     return status;
 }
 
-
-static int gpio_output_init(bool use_ppi)
+static int gpiote_output_init()
 {
-    int status;
-    uint8_t out_channel;
+    uint8_t out_channel;    
+    int status =nrfx_gpiote_init(&input_gpiote_inst, NRFX_GPIOTE_DEFAULT_CONFIG_IRQ_PRIORITY);
+    NRFX_ASSERT(status == 0);
 
-    if(use_ppi)
+    status = nrfx_gpiote_channel_alloc(&input_gpiote_inst, &out_channel);
+    NRFX_ASSERT(status == 0);
+
+    static const nrfx_gpiote_output_config_t output_config =
     {
-        status =nrfx_gpiote_init(&input_gpiote_inst, NRFX_GPIOTE_DEFAULT_CONFIG_IRQ_PRIORITY);
-        NRFX_ASSERT(status == 0);
+        .drive = NRF_GPIO_PIN_S0S1,
+        .input_connect = NRF_GPIO_PIN_INPUT_DISCONNECT,
+        .pull = NRF_GPIO_PIN_NOPULL,
+    };
 
-        status = nrfx_gpiote_channel_alloc(&input_gpiote_inst, &out_channel);
-        NRFX_ASSERT(status == 0);
+    const nrfx_gpiote_task_config_t task_config =
+    {
+        .task_ch = out_channel,
+        .polarity = NRF_GPIOTE_POLARITY_TOGGLE,
+        .init_val = NRF_GPIOTE_INITIAL_VALUE_LOW,
+    };
 
-        static const nrfx_gpiote_output_config_t output_config =
-        {
-            .drive = NRF_GPIO_PIN_S0S1,
-            .input_connect = NRF_GPIO_PIN_INPUT_DISCONNECT,
-            .pull = NRF_GPIO_PIN_NOPULL,
-        };
+    status = nrfx_gpiote_output_configure(&input_gpiote_inst, GPPI_OUTPUT_PIN_PRIMARY, &output_config, &task_config);
+    NRFX_ASSERT(status == 0);
 
-        const nrfx_gpiote_task_config_t task_config =
-        {
-            .task_ch = out_channel,
-            .polarity = NRF_GPIOTE_POLARITY_TOGGLE,
-            .init_val = NRF_GPIOTE_INITIAL_VALUE_LOW,
-        };
+    nrfx_gpiote_out_task_enable(&input_gpiote_inst, GPPI_OUTPUT_PIN_PRIMARY);
 
-        status = nrfx_gpiote_output_configure(&input_gpiote_inst, GPPI_OUTPUT_PIN_PRIMARY, &output_config, &task_config);
-        NRFX_ASSERT(status == 0);
+    return status;
+}
 
-        nrfx_gpiote_out_task_enable(&input_gpiote_inst, GPPI_OUTPUT_PIN_PRIMARY);
-
-        return status;
-    }
-
-    status = gpio_pin_configure_dt(&led, GPIO_OUTPUT | GPIO_ACTIVE_LOW);
+static int gpio_output_init()
+{
+    int status = gpio_pin_configure_dt(&led, GPIO_OUTPUT | GPIO_ACTIVE_LOW);
     NRFX_ASSERT(status == 0);
 
     status = gpio_pin_set_dt(&led, 1);
@@ -290,11 +314,36 @@ static int gpio_output_init(bool use_ppi)
 }
 
 
+static int pattern_output_init(bool use_ppi)
+{
+    int status;
+
+    if(use_ppi)
+    {
+        status = gpiote_output_init();
+        NRFX_ASSERT(status == 0);
+        status = gpiote_outout_dppi_connect();
+        NRFX_ASSERT(status == 0);
+        return status;
+    }
+
+    status = gpio_output_init();
+    return status;
+}
+
+
 int main(void)
 {
-    gpio_output_init(IS_ENABLED(CONFIG_USE_PPI_WORKFLOW));  
-    gpio_input_init(IS_ENABLED(CONFIG_USE_PPI_WORKFLOW));
-    timer_workflow_init(IS_ENABLED(CONFIG_USE_PPI_WORKFLOW));
+    int status;
+
+    status = pattern_output_init(IS_ENABLED(CONFIG_USE_PPI_WORKFLOW));
+    NRFX_ASSERT(status == 0);
+
+    status = pattern_input_init(IS_ENABLED(CONFIG_USE_PPI_WORKFLOW));
+    NRFX_ASSERT(status == 0);
+
+    status = pattern_timer_workflow_init(IS_ENABLED(CONFIG_USE_PPI_WORKFLOW));
+    NRFX_ASSERT(status == 0);
 
     int err;
 

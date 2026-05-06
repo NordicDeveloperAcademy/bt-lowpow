@@ -33,7 +33,6 @@
     };
 };
 
-//STEP 2.3 Disable internal pull-up on button 0
 &button0 {
     gpios = <&gpio1 26 ( GPIO_ACTIVE_LOW)>;
     label = "Push button 0";

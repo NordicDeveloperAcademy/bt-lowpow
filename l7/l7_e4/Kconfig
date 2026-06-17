@@ -1,0 +1,12 @@
+osource "$(ZEPHYR_NRF_MODULE_DIR)/samples/common/mcumgr_bt_ota_dfu/Kconfig"
+
+config SETTINGS
+	default y
+
+config ZMS
+	default y if (SOC_FLASH_NRF_RRAM || SOC_FLASH_NRF_MRAM)
+
+config NVS
+	default y if !(SOC_FLASH_NRF_RRAM || SOC_FLASH_NRF_MRAM)
+
+source "Kconfig.zephyr"

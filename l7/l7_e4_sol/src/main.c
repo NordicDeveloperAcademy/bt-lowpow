@@ -59,9 +59,12 @@ static void security_changed(struct bt_conn *conn, bt_security_t level, enum bt_
   } else {
     printk("Security failed: %s level %u err %d %s\n", addr, level, err,
            bt_security_err_to_str(err));
+
+    // Clear bond information so that the next pair attempt starts clean
+    bt_unpair(BT_ID_DEFAULT, bt_conn_get_dst(conn));
   }
 
-  // L2 is encrypted + authenticated, we can now allow access to MDS for this connection
+  // L2 is encrypted, we can now allow access to MDS for this connection
   if (level >= BT_SECURITY_L2) {
     if (!mds_conn) {
       mds_conn = conn;

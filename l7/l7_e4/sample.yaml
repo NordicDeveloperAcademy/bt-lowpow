@@ -2,7 +2,8 @@ sample:
   description: Designing Low Power Bluetooth LE devices Lesson 7 Exercise 4 - Invoking an OTA Firmware Update over BLE
   name: Low Power Bluetooth LE devices - Lesson 7 Exercise 4
 
-common:
+tests:
+  sample.l4_e4:
     sysbuild: true
     build_only: true
     skip: true
@@ -16,6 +17,3 @@ common:
       - nrf54l15dk/nrf54l10/cpuapp
       - nrf54l15dk/nrf54l05/cpuapp
       - nrf54lm20dk/nrf54lm20a/cpuapp
-
-tests:
-  l7.e4: {}

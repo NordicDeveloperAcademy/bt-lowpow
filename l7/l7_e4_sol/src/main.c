@@ -37,7 +37,9 @@ static void connected(struct bt_conn *conn, uint8_t conn_err) {
   bt_addr_le_to_str(bt_conn_get_dst(conn), addr, sizeof(addr));
   printk("Connected %s\n", addr);
 
+#if defined(CONFIG_BT_SMP)
   bt_conn_set_security(conn, BT_SECURITY_L2);
+#endif  // defined(CONFIG_BT_SMP)
 }
 
 static void disconnected(struct bt_conn *conn, uint8_t reason) {
@@ -48,6 +50,7 @@ static void disconnected(struct bt_conn *conn, uint8_t reason) {
   }
 }
 
+#if defined(CONFIG_BT_SMP)
 // Update MDS connection when security level changes
 static void security_changed(struct bt_conn *conn, bt_security_t level, enum bt_security_err err) {
   char addr[BT_ADDR_LE_STR_LEN];
@@ -71,6 +74,7 @@ static void security_changed(struct bt_conn *conn, bt_security_t level, enum bt_
     }
   }
 }
+#endif  // defined(CONFIG_BT_SMP)
 
 static void adv_work_handler(struct k_work *work) {
   int err = bt_le_adv_start(BT_LE_ADV_CONN_FAST_2, ad, ARRAY_SIZE(ad), sd, ARRAY_SIZE(sd));
@@ -95,10 +99,13 @@ static void recycled_cb(void) {
 BT_CONN_CB_DEFINE(conn_callbacks) = {
   .connected = connected,
   .disconnected = disconnected,
+#if defined(CONFIG_BT_SMP)
   .security_changed = security_changed,
+#endif  // defined(CONFIG_BT_SMP)
   .recycled = recycled_cb,
 };
 
+#if defined(CONFIG_BT_SMP)
 static void pairing_complete(struct bt_conn *conn, bool bonded) {
   char addr[BT_ADDR_LE_STR_LEN];
 
@@ -131,8 +138,9 @@ static void auth_cancel(struct bt_conn *conn) {
 static struct bt_conn_auth_cb conn_auth_callbacks = {
   .cancel = auth_cancel,
 };
+#endif  // defined(CONFIG_BT_SMP)
 
-#if defined(CONFIG_BT_MDS)
+#if defined(CONFIG_BT_MDS) && defined(CONFIG_BT_SMP)
 // Only allow access to MDS for the paired device
 static bool mds_access_enable(struct bt_conn *conn) {
   if (mds_conn && (conn == mds_conn)) {
@@ -145,18 +153,18 @@ static bool mds_access_enable(struct bt_conn *conn) {
 static const struct bt_mds_cb mds_cb = {
   .access_enable = mds_access_enable,
 };
-#endif
+#endif  // defined(CONFIG_BT_MDS) && defined(CONFIG_BT_SMP)
 
 int main(void) {
   int err;
 
-#if defined(CONFIG_BT_MDS)
+#if defined(CONFIG_BT_MDS) && defined(CONFIG_BT_SMP)
   err = bt_mds_cb_register(&mds_cb);
   if (err) {
     printk("Memfault Diagnostic service callback registration failed (err %d)\n", err);
     return 0;
   }
-#endif  // defined(CONFIG_BT_MDS)
+#endif  // defined(CONFIG_BT_MDS) && defined(CONFIG_BT_SMP)
 
   err = bt_enable(NULL);
   if (err) {
@@ -164,6 +172,7 @@ int main(void) {
     return 0;
   }
 
+#if defined(CONFIG_BT_SMP)
   err = bt_conn_auth_cb_register(&conn_auth_callbacks);
   if (err) {
     printk("Failed to register authorization callbacks (err %d)\n", err);
@@ -175,6 +184,7 @@ int main(void) {
     printk("Failed to register authorization info callbacks (err %d)\n", err);
     return 0;
   }
+#endif  // defined(CONFIG_BT_SMP)
 
   printk("Bluetooth initialized\n");
 
